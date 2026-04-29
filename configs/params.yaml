@@ -1,0 +1,52 @@
+# configs/params.yaml
+
+data:
+  raw_path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+  processed_path: data/processed/cleaned.csv
+  train_path: data/splits/train.csv
+  test_path: data/splits/test.csv
+  reference_path: data/splits/reference.csv
+  production_path: data/splits/production.csv
+  target_column: Churn
+  test_size: 0.2
+  random_state: 42
+  reference_ratio: 0.7   # first 70% = reference for drift
+
+preprocessing:
+  pipeline_path: data/processed/preprocessing_pipeline.pkl
+  numeric_features:
+    - tenure
+    - MonthlyCharges
+    - TotalCharges
+  categorical_features:
+    - gender
+    - Partner
+    - Dependents
+    - PhoneService
+    - MultipleLines
+    - InternetService
+    - OnlineSecurity
+    - OnlineBackup
+    - DeviceProtection
+    - TechSupport
+    - StreamingTV
+    - StreamingMovies
+    - Contract
+    - PaperlessBilling
+    - PaymentMethod
+  drop_columns:
+    - customerID
+  imputer_strategy: median
+  scaler: standard
+  use_smote: true
+
+monitoring:
+  drift_threshold: 0.2       # >20% of features drifted = warning
+  drift_report_path: monitoring/evidently_reports/drift_report.html
+  baseline_report_path: monitoring/evidently_reports/baseline_report.html
+  noise_scale: 3.0           # multiplier for injected noise
+  noisy_features:
+    - tenure
+    - MonthlyCharges
+    - TotalCharges
+  prometheus_port: 8001
