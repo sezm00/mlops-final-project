@@ -1,0 +1,52 @@
+# =====================================
+# MLOps Final Project - CODEOWNERS
+# =====================================
+
+# -------------------------------------
+# DEFAULT OWNERS (fallback)
+# -------------------------------------
+* @sezm00 @BEB024 @shahdkazan
+
+# -------------------------------------
+# DATA & PREPROCESSING — Shahd
+# -------------------------------------
+/src/data/                     @shahdkazan
+/src/features/                 @shahdkazan
+/data/                         @shahdkazan
+/configs/                      @shahdkazan
+/configs/params.yaml           @shahdkazan
+/tests/data/                   @shahdkazan
+/tests/unit/                   @shahdkazan
+
+# -------------------------------------
+# TRAINING & MLFLOW — Islam
+# -------------------------------------
+/src/training/                 @BEB024
+/src/evaluation/               @BEB024
+/dvc.yaml                      @BEB024
+/dvc.lock                      @BEB024
+
+# -------------------------------------
+# SERVING, CI/CD & MONITORING — Ibrahim
+# -------------------------------------
+/src/serving/                  @sezm00
+/monitoring/                   @sezm00
+/.github/                      @sezm00
+/.github/workflows/            @sezm00
+/tests/integration/            @sezm00
+
+# DevOps / deployment files
+Dockerfile                     @sezm00
+docker-compose.yml             @sezm00
+requirements.txt               @sezm00
+
+# -------------------------------------
+# DOCUMENTATION — SHARED
+# -------------------------------------
+/docs/                         @BEB024 @shahdkazan @sezm00
+README.md                      @BEB024 @shahdkazan @sezm00
+
+# -------------------------------------
+# NOTEBOOKS (EDA only) — Shahd
+# -------------------------------------
+/notebooks/                    @shahdkazan

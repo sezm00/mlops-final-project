@@ -216,3 +216,43 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# =========================
+# MLOps Project Additions
+# =========================
+
+# Data (handled by DVC — do NOT commit raw data)
+data/raw/
+data/processed/
+data/splits/
+
+# If you want to ignore all data (optional)
+# data/
+
+# Keep folder structure
+!data/.gitkeep
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/splits/.gitkeep
+
+# Models & artifacts
+models/
+*.pkl
+*.joblib
+*.h5
+
+# MLflow
+mlruns/
+
+# Logs & temp files
+logs/
+*.log
+tmp/
+temp/
+
+# DVC cache
+.dvc/cache/
+
+# OS files (extra safety)
+.DS_Store
+Thumbs.db
