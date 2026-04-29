@@ -217,6 +217,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+
 # =========================
 # MLOps Project Additions
 # =========================
@@ -225,9 +226,6 @@ __marimo__/
 data/raw/
 data/processed/
 data/splits/
-
-# If you want to ignore all data (optional)
-# data/
 
 # Keep folder structure
 !data/.gitkeep
@@ -249,10 +247,17 @@ logs/
 *.log
 tmp/
 temp/
+*.pyc
 
 # DVC cache
 .dvc/cache/
 
-# OS files (extra safety)
+# Monitoring
+monitoring/evidently_reports/
+
+# Databases
+*.db
+
+# OS files
 .DS_Store
 Thumbs.db
