@@ -223,7 +223,11 @@ __marimo__/
 # =========================
 
 # Data (handled by DVC — do NOT commit raw data)
-data/raw/
+# ignore raw data files
+data/raw/*
+
+# but allow DVC metadata
+!data/raw/*.dvc
 data/processed/
 data/splits/
 
