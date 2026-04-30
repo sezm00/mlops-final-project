@@ -2,9 +2,11 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [develop]
+    branches:
+      - "**"          # run everywhere (testing)
   pull_request:
-    branches: [develop]
+    branches:
+      - develop        # only run on PRs to develop (testing)
 
 jobs:
   build-and-test:
