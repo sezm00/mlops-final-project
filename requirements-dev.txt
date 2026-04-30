@@ -113,7 +113,7 @@ Pygments==2.20.0
 pygtrie==2.5.0
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
-pywin32==311
+#pywin32==311
 regex==2026.4.4
 ruamel.yaml==0.19.1
 semver==3.0.4
