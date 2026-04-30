@@ -56,7 +56,7 @@ jobs:
       # -------------------------------------
       - name: Run tests
         run: |
-          pytest || true --maxfail=1 --disable-warnings --cov=src
+          pytest --maxfail=1 --disable-warnings --cov=src
 
       # -------------------------------------
       # 7. Upload coverage (optional)
