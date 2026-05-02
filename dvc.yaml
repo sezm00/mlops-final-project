@@ -32,3 +32,14 @@ stages:
       - data/splits/reference.csv
       - data/splits/production.csv
       - data/processed/reference_stats.json
+
+  # ── Stage 3: Schema Validation (NO transformations) ──────────────────────
+  validate_schema:
+    cmd: python src/features/validate_schema.py
+    deps:
+      - src/features/validate_schema.py
+      - configs/params.yaml
+      - data/splits/reference.csv
+      - data/splits/production.csv
+    outs:
+      - data/splits/.schema_validated.flag
