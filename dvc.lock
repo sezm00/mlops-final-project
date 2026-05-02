@@ -1,0 +1,156 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python src/data/prepare.py
+    deps:
+    - path: configs/params.yaml
+      hash: md5
+      md5: 601b5681b84c567b0817ee94f55db6f8
+      size: 6002
+    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      hash: md5
+      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+      size: 977501
+    - path: src/data/prepare.py
+      hash: md5
+      md5: 08e658a5777f7670d3f5ae2c763a2d75
+      size: 10234
+    outs:
+    - path: data/splits/cleaned_production.csv
+      hash: md5
+      md5: 0e16baf2fdc9200235ff872ea051de2a
+      size: 218059
+    - path: data/splits/cleaned_reference.csv
+      hash: md5
+      md5: d392cd040bfaffe4c0e13f8f1de8cd4c
+      size: 509550
+  featurize:
+    cmd: python src/features/featurize.py
+    deps:
+    - path: configs/params.yaml
+      hash: md5
+      md5: 601b5681b84c567b0817ee94f55db6f8
+      size: 6002
+    - path: data/splits/cleaned_production.csv
+      hash: md5
+      md5: 0e16baf2fdc9200235ff872ea051de2a
+      size: 218059
+    - path: data/splits/cleaned_reference.csv
+      hash: md5
+      md5: d392cd040bfaffe4c0e13f8f1de8cd4c
+      size: 509550
+    - path: src/features/featurize.py
+      hash: md5
+      md5: 94df3ecf67e9c8ed23fc0277d59885a9
+      size: 3436
+    outs:
+    - path: data/processed/reference_stats.json
+      hash: md5
+      md5: 5a35b37f26f758d703a42f329787f59b
+      size: 94
+    - path: data/splits/production.csv
+      hash: md5
+      md5: b433fb89885399384869da7f29ba6005
+      size: 341907
+    - path: data/splits/reference.csv
+      hash: md5
+      md5: 65b866c473672988eae5c3a349356271
+      size: 797080
+  validate_schema:
+    cmd: python src/features/validate_schema.py
+    deps:
+    - path: configs/params.yaml
+      hash: md5
+      md5: 601b5681b84c567b0817ee94f55db6f8
+      size: 6002
+    - path: data/splits/production.csv
+      hash: md5
+      md5: b433fb89885399384869da7f29ba6005
+      size: 341907
+    - path: data/splits/reference.csv
+      hash: md5
+      md5: 65b866c473672988eae5c3a349356271
+      size: 797080
+    - path: src/features/validate_schema.py
+      hash: md5
+      md5: 295e452eb1fd9954d74ece9c80b4a8f9
+      size: 3888
+    outs:
+    - path: data/splits/.schema_validated.flag
+      hash: md5
+      md5: d05b45e38c001045fb460d8218457228
+      size: 23
+  preprocess:
+    cmd: python src/data/preprocess.py
+    deps:
+    - path: configs/params.yaml
+      hash: md5
+      md5: 601b5681b84c567b0817ee94f55db6f8
+      size: 6002
+    - path: data/processed/reference_stats.json
+      hash: md5
+      md5: 5a35b37f26f758d703a42f329787f59b
+      size: 94
+    - path: data/splits/.schema_validated.flag
+      hash: md5
+      md5: d05b45e38c001045fb460d8218457228
+      size: 23
+    - path: src/data/preprocess.py
+      hash: md5
+      md5: 5242f16ce08c9e3bdd88eb1d37c3951a
+      size: 8519
+    params:
+      configs/params.yaml:
+        encoding:
+          binary_columns:
+          - gender
+          - Partner
+          - Dependents
+          - PhoneService
+          - PaperlessBilling
+          ohe_columns:
+          - MultipleLines
+          - InternetService
+          - OnlineSecurity
+          - OnlineBackup
+          - DeviceProtection
+          - TechSupport
+          - StreamingTV
+          - StreamingMovies
+          - Contract
+          - PaymentMethod
+        preprocessing:
+          scaler: standard
+          numeric_features:
+          - tenure
+          - MonthlyCharges
+          - TotalCharges
+          - AvgMonthlyCharges
+          - ChargeDeviation
+          - TotalCharges_log
+          - NumServices
+          - IsHighValueCustomer
+          imputer_strategy: median
+          use_smote: true
+          smote_k_neighbors: 5
+        split.random_state: 42
+        split.test_size: 0.2
+        stat_features:
+          high_value_quantile: 0.75
+    outs:
+    - path: data/processed/preprocessing_pipeline.pkl
+      hash: md5
+      md5: ffefe84e864ff9b93d955b77d5ec8ab5
+      size: 11237
+    - path: data/splits/production_processed.csv
+      hash: md5
+      md5: f65bdecbe8859b1c3d0bbe3a0e1226e5
+      size: 498047
+    - path: data/splits/test.csv
+      hash: md5
+      md5: af7be2763bf0b853137603e86ed13dd1
+      size: 232790
+    - path: data/splits/train.csv
+      hash: md5
+      md5: b237cccad282087c25ac63f94b2faa74
+      size: 1428402
