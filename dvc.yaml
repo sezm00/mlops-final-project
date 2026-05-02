@@ -43,3 +43,26 @@ stages:
       - data/splits/production.csv
     outs:
       - data/splits/.schema_validated.flag
+
+  
+  # ── Stage 4: Encoding + Scaling + SMOTE ───────────────────────────────────
+  preprocess:
+    cmd: python src/data/preprocess.py
+    deps:
+      - src/data/preprocess.py
+      - configs/params.yaml
+    
+      - data/processed/reference_stats.json
+      - data/splits/.schema_validated.flag 
+    params:
+      - configs/params.yaml:
+          - stat_features
+          - encoding
+          - preprocessing
+          - split.test_size
+          - split.random_state
+    outs:
+      - data/splits/train.csv
+      - data/splits/test.csv
+      - data/splits/production_processed.csv
+      - data/processed/preprocessing_pipeline.pkl
