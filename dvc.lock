@@ -5,16 +5,16 @@ stages:
     deps:
     - path: configs/params.yaml
       hash: md5
-      md5: 2a0e651f3dd094113af6224db65a72ad
-      size: 5878
+      md5: 601b5681b84c567b0817ee94f55db6f8
+      size: 6002
     - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
       hash: md5
       md5: 0f9de68e012bd3aed5fa7cdc9fc421af
       size: 977501
     - path: src/data/prepare.py
       hash: md5
-      md5: d9ca852d602a19b9f5a54afae96fa273
-      size: 10024
+      md5: 08e658a5777f7670d3f5ae2c763a2d75
+      size: 10234
     outs:
     - path: data/splits/cleaned_production.csv
       hash: md5
@@ -24,3 +24,35 @@ stages:
       hash: md5
       md5: d392cd040bfaffe4c0e13f8f1de8cd4c
       size: 509550
+  featurize:
+    cmd: python src/features/featurize.py
+    deps:
+    - path: configs/params.yaml
+      hash: md5
+      md5: 601b5681b84c567b0817ee94f55db6f8
+      size: 6002
+    - path: data/splits/cleaned_production.csv
+      hash: md5
+      md5: 0e16baf2fdc9200235ff872ea051de2a
+      size: 218059
+    - path: data/splits/cleaned_reference.csv
+      hash: md5
+      md5: d392cd040bfaffe4c0e13f8f1de8cd4c
+      size: 509550
+    - path: src/features/featurize.py
+      hash: md5
+      md5: 94df3ecf67e9c8ed23fc0277d59885a9
+      size: 3436
+    outs:
+    - path: data/processed/reference_stats.json
+      hash: md5
+      md5: 5a35b37f26f758d703a42f329787f59b
+      size: 94
+    - path: data/splits/production.csv
+      hash: md5
+      md5: b433fb89885399384869da7f29ba6005
+      size: 341907
+    - path: data/splits/reference.csv
+      hash: md5
+      md5: 65b866c473672988eae5c3a349356271
+      size: 797080
