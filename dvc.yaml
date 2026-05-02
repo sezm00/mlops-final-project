@@ -19,3 +19,16 @@ stages:
       - data/splits/cleaned_reference.csv
       - data/splits/cleaned_production.csv
 
+
+  # ── Stage 2: Feature Engineering (row-level + stat-level) ────────────────
+  featurize:
+    cmd: python src/features/featurize.py
+    deps:
+      - src/features/featurize.py
+      - configs/params.yaml
+      - data/splits/cleaned_reference.csv
+      - data/splits/cleaned_production.csv
+    outs:
+      - data/splits/reference.csv
+      - data/splits/production.csv
+      - data/processed/reference_stats.json
