@@ -217,17 +217,19 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+
 # =========================
 # MLOps Project Additions
 # =========================
 
 # Data (handled by DVC — do NOT commit raw data)
-data/raw/
+# ignore raw data files
+data/raw/*
+
+# but allow DVC metadata
+!data/raw/*.dvc
 data/processed/
 data/splits/
-
-# If you want to ignore all data (optional)
-# data/
 
 # Keep folder structure
 !data/.gitkeep
@@ -249,10 +251,17 @@ logs/
 *.log
 tmp/
 temp/
+*.pyc
 
 # DVC cache
 .dvc/cache/
 
-# OS files (extra safety)
+# Monitoring
+monitoring/evidently_reports/
+
+# Databases
+*.db
+
+# OS files
 .DS_Store
 Thumbs.db

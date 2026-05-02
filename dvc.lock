@@ -1,0 +1,26 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python src/data/prepare.py
+    deps:
+    - path: configs/params.yaml
+      hash: md5
+      md5: 2a0e651f3dd094113af6224db65a72ad
+      size: 5878
+    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+      hash: md5
+      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
+      size: 977501
+    - path: src/data/prepare.py
+      hash: md5
+      md5: d9ca852d602a19b9f5a54afae96fa273
+      size: 10024
+    outs:
+    - path: data/splits/cleaned_production.csv
+      hash: md5
+      md5: 0e16baf2fdc9200235ff872ea051de2a
+      size: 218059
+    - path: data/splits/cleaned_reference.csv
+      hash: md5
+      md5: d392cd040bfaffe4c0e13f8f1de8cd4c
+      size: 509550
