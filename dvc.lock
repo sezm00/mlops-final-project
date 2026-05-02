@@ -56,3 +56,27 @@ stages:
       hash: md5
       md5: 65b866c473672988eae5c3a349356271
       size: 797080
+  validate_schema:
+    cmd: python src/features/validate_schema.py
+    deps:
+    - path: configs/params.yaml
+      hash: md5
+      md5: 601b5681b84c567b0817ee94f55db6f8
+      size: 6002
+    - path: data/splits/production.csv
+      hash: md5
+      md5: b433fb89885399384869da7f29ba6005
+      size: 341907
+    - path: data/splits/reference.csv
+      hash: md5
+      md5: 65b866c473672988eae5c3a349356271
+      size: 797080
+    - path: src/features/validate_schema.py
+      hash: md5
+      md5: e7ea54064aa7206744c787640e9ddf4b
+      size: 3787
+    outs:
+    - path: data/splits/.schema_validated.flag
+      hash: md5
+      md5: d05b45e38c001045fb460d8218457228
+      size: 23
