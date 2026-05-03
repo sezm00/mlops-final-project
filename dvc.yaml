@@ -1,68 +1,52 @@
-# dvc.yaml
-# ─────────────────────────────────────────────────────────────────────────────
-# DVC Pipeline — Telco Churn MLOps
-# Execution order: prepare → featurize → validate_schema → preprocess
-# Run full pipeline : dvc repro
-# View DAG          : dvc dag
-# ─────────────────────────────────────────────────────────────────────────────
-
 stages:
-
-  # ── Stage 1: Cleaning + Split (NO features) ───────────────────────────────
   prepare:
-    cmd: python src/data/prepare.py
+    cmd: python src/training/prepare_stage.py --train-path data/splits/train.csv --test-path data/splits/test.csv --output-path reports/pipeline/prepare_summary.json
     deps:
-      - src/data/prepare.py
-      - configs/params.yaml
-      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
-    outs:
-      - data/splits/cleaned_reference.csv
-      - data/splits/cleaned_production.csv
-
-
-  # ── Stage 2: Feature Engineering (row-level + stat-level) ────────────────
-  featurize:
-    cmd: python src/features/featurize.py
-    deps:
-      - src/features/featurize.py
-      - configs/params.yaml
-      - data/splits/cleaned_reference.csv
-      - data/splits/cleaned_production.csv
-    outs:
-      - data/splits/reference.csv
-      - data/splits/production.csv
-      - data/processed/reference_stats.json
-
-  # ── Stage 3: Schema Validation (NO transformations) ──────────────────────
-  validate_schema:
-    cmd: python src/features/validate_schema.py
-    deps:
-      - src/features/validate_schema.py
-      - configs/params.yaml
-      - data/splits/reference.csv
-      - data/splits/production.csv
-    outs:
-      - data/splits/.schema_validated.flag
-
-  
-  # ── Stage 4: Encoding + Scaling + SMOTE ───────────────────────────────────
-  preprocess:
-    cmd: python src/data/preprocess.py
-    deps:
-      - src/data/preprocess.py
-      - configs/params.yaml
-    
-      - data/processed/reference_stats.json
-      - data/splits/.schema_validated.flag 
-    params:
-      - configs/params.yaml:
-          - stat_features
-          - encoding
-          - preprocessing
-          - split.test_size
-          - split.random_state
-    outs:
+      - src/training/prepare_stage.py
       - data/splits/train.csv
       - data/splits/test.csv
-      - data/splits/production_processed.csv
-      - data/processed/preprocessing_pipeline.pkl
+    outs:
+      - reports/pipeline/prepare_summary.json
+
+  preprocess:
+    cmd: python src/training/preprocess_stage.py --train-path data/splits/train.csv --test-path data/splits/test.csv --target-column target --train-output-path data/processed/train_processed.csv --test-output-path data/processed/test_processed.csv --summary-path reports/pipeline/preprocess_summary.json
+    deps:
+      - src/training/preprocess_stage.py
+      - data/splits/train.csv
+      - data/splits/test.csv
+    outs:
+      - data/processed/train_processed.csv
+      - data/processed/test_processed.csv
+      - reports/pipeline/preprocess_summary.json
+
+  featurize:
+    cmd: python src/training/featurize_stage.py --train-path data/processed/train_processed.csv --test-path data/processed/test_processed.csv --target-column target --train-output-path data/features/train_features.csv --test-output-path data/features/test_features.csv --metadata-path reports/pipeline/feature_metadata.json
+    deps:
+      - src/training/featurize_stage.py
+      - data/processed/train_processed.csv
+      - data/processed/test_processed.csv
+    outs:
+      - data/features/train_features.csv
+      - data/features/test_features.csv
+      - reports/pipeline/feature_metadata.json
+
+  train:
+    cmd: python src/training/train.py --train-path data/features/train_features.csv --test-path data/features/test_features.csv --target-column target --model-dir models --report-dir reports
+    deps:
+      - src/training/train.py
+      - src/training/mlflow_setup.py
+      - src/evaluation/evaluate.py
+      - src/evaluation/diagnostics.py
+      - data/features/train_features.csv
+      - data/features/test_features.csv
+    outs:
+      - models/best_model.pkl
+      - models/feature_columns.json
+      - reports/best_model_summary.json
+      - reports/mlflow_run_summary.csv
+      - reports/model_diagnostics_report.json
+      - reports/data_leakage_report.json
+      - reports/data_drift_report.json
+    metrics:
+      - reports/metrics.json:
+          cache: false
