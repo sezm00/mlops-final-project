@@ -20,7 +20,8 @@ stages:
       - data/splits/production.csv
 
   featurize:
-    cmd: PYTHONPATH=. python -m src.features.featurize
+    # cmd: PYTHONPATH=. python -m src.features.featurize
+    cmd: python -m src.features.featurize
     deps:
       - src/features/featurize.py
       - src/features/feature_engineer.py
