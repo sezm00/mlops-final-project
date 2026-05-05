@@ -113,14 +113,4 @@ preprocessing:
   use_smote:        true
   smote_k_neighbors: 5
 
-# ── Monitoring ────────────────────────────────────────────────────────────────
-monitoring:
-  drift_threshold:      0.20            # alert if > 20 % of features drift
-  noise_scale:          3.0             # σ multiplier for Gaussian drift injection
-  noisy_features:                       # features to perturb in drift report
-    - tenure
-    - MonthlyCharges
-    - TotalCharges
-  baseline_report_path: monitoring/evidently_reports/baseline_report.html
-  drift_report_path:    monitoring/evidently_reports/drift_report.html
-  prometheus_port:      8001
+
