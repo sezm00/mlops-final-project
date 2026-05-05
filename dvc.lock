@@ -5,57 +5,53 @@ stages:
     deps:
     - path: configs/params.yaml
       hash: md5
-      md5: 601b5681b84c567b0817ee94f55db6f8
-      size: 6002
+      md5: c10b6c64717ec54cf1ac6ddd5e04b85d
+      size: 5583
     - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
       hash: md5
       md5: 0f9de68e012bd3aed5fa7cdc9fc421af
       size: 977501
     - path: src/data/prepare.py
       hash: md5
-      md5: 08e658a5777f7670d3f5ae2c763a2d75
-      size: 10234
+      md5: 2aabbf7f228d74b4525070be8e8a020a
+      size: 10367
     outs:
-    - path: data/splits/cleaned_production.csv
-      hash: md5
-      md5: 0e16baf2fdc9200235ff872ea051de2a
-      size: 218059
-    - path: data/splits/cleaned_reference.csv
+    - path: data/processed/cleaned_reference.csv
       hash: md5
       md5: d392cd040bfaffe4c0e13f8f1de8cd4c
       size: 509550
+    - path: data/splits/production.csv
+      hash: md5
+      md5: ab92cb0afcc6ab7126cf13912bf2e0f0
+      size: 289855
   featurize:
-    cmd: python src/features/featurize.py
+    cmd: python -m src.features.featurize
     deps:
     - path: configs/params.yaml
       hash: md5
-      md5: 601b5681b84c567b0817ee94f55db6f8
-      size: 6002
-    - path: data/splits/cleaned_production.csv
-      hash: md5
-      md5: 0e16baf2fdc9200235ff872ea051de2a
-      size: 218059
-    - path: data/splits/cleaned_reference.csv
+      md5: c10b6c64717ec54cf1ac6ddd5e04b85d
+      size: 5583
+    - path: data/processed/cleaned_reference.csv
       hash: md5
       md5: d392cd040bfaffe4c0e13f8f1de8cd4c
       size: 509550
+    - path: src/features/feature_engineer.py
+      hash: md5
+      md5: 2314aa9b72f10655b98199951755705b
+      size: 1847
     - path: src/features/featurize.py
       hash: md5
-      md5: 94df3ecf67e9c8ed23fc0277d59885a9
-      size: 3436
+      md5: b79a7f9c648857c99dbd8d76652b840b
+      size: 1677
     outs:
-    - path: data/processed/reference_stats.json
-      hash: md5
-      md5: 5a35b37f26f758d703a42f329787f59b
-      size: 94
-    - path: data/splits/production.csv
-      hash: md5
-      md5: b433fb89885399384869da7f29ba6005
-      size: 341907
-    - path: data/splits/reference.csv
+    - path: data/processed/featurized_reference.csv
       hash: md5
       md5: 65b866c473672988eae5c3a349356271
       size: 797080
+    - path: models/feature_engineer.joblib
+      hash: md5
+      md5: 0da916d5c404824680add53a4695d862
+      size: 2260
   validate_schema:
     cmd: python src/features/validate_schema.py
     deps:
@@ -85,20 +81,16 @@ stages:
     deps:
     - path: configs/params.yaml
       hash: md5
-      md5: 601b5681b84c567b0817ee94f55db6f8
-      size: 6002
-    - path: data/processed/reference_stats.json
+      md5: c10b6c64717ec54cf1ac6ddd5e04b85d
+      size: 5583
+    - path: data/processed/featurized_reference.csv
       hash: md5
-      md5: 5a35b37f26f758d703a42f329787f59b
-      size: 94
-    - path: data/splits/.schema_validated.flag
-      hash: md5
-      md5: d05b45e38c001045fb460d8218457228
-      size: 23
+      md5: 65b866c473672988eae5c3a349356271
+      size: 797080
     - path: src/data/preprocess.py
       hash: md5
-      md5: 5242f16ce08c9e3bdd88eb1d37c3951a
-      size: 8519
+      md5: 411f5e388ab0fd2034ba3e670c165d90
+      size: 8531
     params:
       configs/params.yaml:
         encoding:
@@ -108,6 +100,7 @@ stages:
           - Dependents
           - PhoneService
           - PaperlessBilling
+          - SeniorCitizen
           ohe_columns:
           - MultipleLines
           - InternetService
@@ -138,19 +131,15 @@ stages:
         stat_features:
           high_value_quantile: 0.75
     outs:
-    - path: data/processed/preprocessing_pipeline.pkl
-      hash: md5
-      md5: ffefe84e864ff9b93d955b77d5ec8ab5
-      size: 11237
-    - path: data/splits/production_processed.csv
-      hash: md5
-      md5: f65bdecbe8859b1c3d0bbe3a0e1226e5
-      size: 498047
     - path: data/splits/test.csv
       hash: md5
-      md5: af7be2763bf0b853137603e86ed13dd1
-      size: 232790
+      md5: 0008fec9bffba059638baf2c14c82aac
+      size: 236755
     - path: data/splits/train.csv
       hash: md5
-      md5: b237cccad282087c25ac63f94b2faa74
-      size: 1428402
+      md5: e55b73949a795079c43015141559aa6d
+      size: 1395567
+    - path: models/preprocessing_pipeline.joblib
+      hash: md5
+      md5: 962ae385faabb654ce5637aa435c686a
+      size: 11267
