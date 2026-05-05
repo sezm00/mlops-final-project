@@ -10,9 +10,9 @@ NO feature engineering of any kind is performed here — not row-level,
 not statistical. All feature engineering is exclusively owned by
 featurize.py (Stage 2).
 
-Execution order:
 
-  Step 1  clean()
+
+  clean()
           — fix types, correct known invalid values, standardise
             categorical labels, drop the identifier column.
           NOTE: TotalCharges NaN rows that arise from pd.to_numeric
@@ -20,11 +20,11 @@ Execution order:
             They will be imputed by the sklearn pipeline in preprocess.py
             using the reference-set median computed in featurize.py.
 
-  Step 2  encode_target()
+   encode_target()
           — map Churn Yes → 1, No → 0 on the full dataset before the split
             so both halves share the same integer encoding with no fitting.
 
-  Step 3  split_reference_production()
+  split_reference_production()
           — deterministic positional 70/30 split.
             The first 70 % of rows (older customers) become the reference
             set used for training; the remaining 30 % become production,
@@ -36,9 +36,6 @@ Leakage guarantees:
   • No use of dataset statistics (mean, median, quantiles).
   • No dependency on the reference/production relationship.
 
-Outputs:
-  data/splits/cleaned_reference.csv   (70 %) → input to featurize.py
-  data/splits/cleaned_production.csv  (30 %) → input to featurize.py
 """
 
 import os
@@ -92,7 +89,8 @@ def clean(df: pd.DataFrame, params: dict) -> pd.DataFrame:
         df[col] = df[col].replace("No phone service", "No")
 
     # 1d. Drop customerID — unique per row, zero predictive signal
-    df.drop(columns=params["cleaning"]["drop_columns"], inplace=True)
+    cols_to_drop = [c for c in params["cleaning"]["drop_columns"] if c in df.columns]
+    df.drop(columns=cols_to_drop, inplace=True)
 
     return df
 
@@ -170,25 +168,19 @@ def prepare() -> None:
 
     raw_path = params["data"]["raw_path"]
     cleaned_reference_path = params["data"]["cleaned_reference_path"]
-    cleaned_production_path = params["data"]["cleaned_production_path"]
+    production_path = params["data"]["production_path"]
     target = params["data"]["target_column"]
     reference_ratio = params["split"]["reference_ratio"]
 
-    for path in [cleaned_reference_path, cleaned_production_path]:
+    for path in [cleaned_reference_path, production_path]:
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-    # ── Step 1: Load & clean ──────────────────────────────────────────────────
+    # ── Step 1: Load raw ──────────────────────────────────────────────────────
     print(f"[prepare] Loading raw data from: {raw_path}")
     df = pd.read_csv(raw_path)
     print(f"[prepare] Raw shape: {df.shape}")
 
-    df = clean(df, params)
-    nan_total = df.isnull().sum().sum()
-    print(f"[prepare] After cleaning : {df.shape} | NaN total: {nan_total}")
-    if nan_total > 0:
-        print(f"[prepare]   NaN breakdown:\n{df.isnull().sum()[df.isnull().sum() > 0]}")
-
-    # ── Step 2: Target encoding ───────────────────────────────────────────────
+    # ── Step 2: Target encoding (before split) ────────────────────────────────
     df = encode_target(df, target)
     print(f"[prepare] Target encoded — {df[target].value_counts().to_dict()}")
 
@@ -197,12 +189,24 @@ def prepare() -> None:
         df, reference_ratio, target
     )
 
-    # ── Save cleaned splits (no features yet) ────────────────────────────────
-    reference_df.to_csv(cleaned_reference_path, index=False)
-    production_df.to_csv(cleaned_production_path, index=False)
+    # ── Step 4: Clean ONLY reference ──────────────────────────────────────────
+    reference_df = clean(reference_df, params)
 
-    print(f"[prepare] Cleaned reference  saved → {cleaned_reference_path}")
-    print(f"[prepare] Cleaned production saved → {cleaned_production_path}")
+    nan_total = reference_df.isnull().sum().sum()
+    print(f"[prepare] Reference after cleaning : {reference_df.shape} | NaN total: {nan_total}")
+
+    if nan_total > 0:
+        print(f"[prepare]   NaN breakdown:\n{reference_df.isnull().sum()[reference_df.isnull().sum() > 0]}")
+
+    # ── Production remains raw ────────────────────────────────────────────────
+    print(f"[prepare] Production kept raw : {production_df.shape}")
+
+    # ── Save outputs ───────────────────────────────────────────────────────────
+    reference_df.to_csv(cleaned_reference_path, index=False)
+    production_df.to_csv(production_path, index=False)
+
+    print(f"[prepare] Reference saved  → {cleaned_reference_path}")
+    print(f"[prepare] Production saved → {production_path}")
     print("[prepare] DONE — feature engineering delegated to featurize.py")
 
 
