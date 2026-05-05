@@ -1,156 +1,152 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python src/data/prepare.py
+    cmd: python src/training/prepare_stage.py --train-path data/splits/train.csv
+      --test-path data/splits/test.csv --output-path 
+      reports/pipeline/prepare_summary.json
     deps:
-    - path: configs/params.yaml
-      hash: md5
-      md5: 601b5681b84c567b0817ee94f55db6f8
-      size: 6002
-    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
-      hash: md5
-      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
-      size: 977501
-    - path: src/data/prepare.py
-      hash: md5
-      md5: 08e658a5777f7670d3f5ae2c763a2d75
-      size: 10234
-    outs:
-    - path: data/splits/cleaned_production.csv
-      hash: md5
-      md5: 0e16baf2fdc9200235ff872ea051de2a
-      size: 218059
-    - path: data/splits/cleaned_reference.csv
-      hash: md5
-      md5: d392cd040bfaffe4c0e13f8f1de8cd4c
-      size: 509550
-  featurize:
-    cmd: python src/features/featurize.py
-    deps:
-    - path: configs/params.yaml
-      hash: md5
-      md5: 601b5681b84c567b0817ee94f55db6f8
-      size: 6002
-    - path: data/splits/cleaned_production.csv
-      hash: md5
-      md5: 0e16baf2fdc9200235ff872ea051de2a
-      size: 218059
-    - path: data/splits/cleaned_reference.csv
-      hash: md5
-      md5: d392cd040bfaffe4c0e13f8f1de8cd4c
-      size: 509550
-    - path: src/features/featurize.py
-      hash: md5
-      md5: 94df3ecf67e9c8ed23fc0277d59885a9
-      size: 3436
-    outs:
-    - path: data/processed/reference_stats.json
-      hash: md5
-      md5: 5a35b37f26f758d703a42f329787f59b
-      size: 94
-    - path: data/splits/production.csv
-      hash: md5
-      md5: b433fb89885399384869da7f29ba6005
-      size: 341907
-    - path: data/splits/reference.csv
-      hash: md5
-      md5: 65b866c473672988eae5c3a349356271
-      size: 797080
-  validate_schema:
-    cmd: python src/features/validate_schema.py
-    deps:
-    - path: configs/params.yaml
-      hash: md5
-      md5: 601b5681b84c567b0817ee94f55db6f8
-      size: 6002
-    - path: data/splits/production.csv
-      hash: md5
-      md5: b433fb89885399384869da7f29ba6005
-      size: 341907
-    - path: data/splits/reference.csv
-      hash: md5
-      md5: 65b866c473672988eae5c3a349356271
-      size: 797080
-    - path: src/features/validate_schema.py
-      hash: md5
-      md5: 295e452eb1fd9954d74ece9c80b4a8f9
-      size: 3888
-    outs:
-    - path: data/splits/.schema_validated.flag
-      hash: md5
-      md5: d05b45e38c001045fb460d8218457228
-      size: 23
-  preprocess:
-    cmd: python src/data/preprocess.py
-    deps:
-    - path: configs/params.yaml
-      hash: md5
-      md5: 601b5681b84c567b0817ee94f55db6f8
-      size: 6002
-    - path: data/processed/reference_stats.json
-      hash: md5
-      md5: 5a35b37f26f758d703a42f329787f59b
-      size: 94
-    - path: data/splits/.schema_validated.flag
-      hash: md5
-      md5: d05b45e38c001045fb460d8218457228
-      size: 23
-    - path: src/data/preprocess.py
-      hash: md5
-      md5: 5242f16ce08c9e3bdd88eb1d37c3951a
-      size: 8519
-    params:
-      configs/params.yaml:
-        encoding:
-          binary_columns:
-          - gender
-          - Partner
-          - Dependents
-          - PhoneService
-          - PaperlessBilling
-          ohe_columns:
-          - MultipleLines
-          - InternetService
-          - OnlineSecurity
-          - OnlineBackup
-          - DeviceProtection
-          - TechSupport
-          - StreamingTV
-          - StreamingMovies
-          - Contract
-          - PaymentMethod
-        preprocessing:
-          scaler: standard
-          numeric_features:
-          - tenure
-          - MonthlyCharges
-          - TotalCharges
-          - AvgMonthlyCharges
-          - ChargeDeviation
-          - TotalCharges_log
-          - NumServices
-          - IsHighValueCustomer
-          imputer_strategy: median
-          use_smote: true
-          smote_k_neighbors: 5
-        split.random_state: 42
-        split.test_size: 0.2
-        stat_features:
-          high_value_quantile: 0.75
-    outs:
-    - path: data/processed/preprocessing_pipeline.pkl
-      hash: md5
-      md5: ffefe84e864ff9b93d955b77d5ec8ab5
-      size: 11237
-    - path: data/splits/production_processed.csv
-      hash: md5
-      md5: f65bdecbe8859b1c3d0bbe3a0e1226e5
-      size: 498047
     - path: data/splits/test.csv
       hash: md5
-      md5: af7be2763bf0b853137603e86ed13dd1
-      size: 232790
+      md5: 064879f4a3855ddd65ad7098229875a7
+      size: 15806
     - path: data/splits/train.csv
       hash: md5
-      md5: b237cccad282087c25ac63f94b2faa74
-      size: 1428402
+      md5: de4b8920f56dec56311612f1947fedd0
+      size: 62998
+    - path: src/training/prepare_stage.py
+      hash: md5
+      md5: d3d758dcc2397322ca437efab6e05880
+      size: 1742
+    outs:
+    - path: reports/pipeline/prepare_summary.json
+      hash: md5
+      md5: 7da1506391a9b197cba1e7f94cc58ccc
+      size: 387
+  preprocess:
+    cmd: python src/training/preprocess_stage.py --train-path 
+      data/splits/train.csv --test-path data/splits/test.csv --target-column 
+      target --train-output-path data/processed/train_processed.csv 
+      --test-output-path data/processed/test_processed.csv --summary-path 
+      reports/pipeline/preprocess_summary.json
+    deps:
+    - path: data/splits/test.csv
+      hash: md5
+      md5: 064879f4a3855ddd65ad7098229875a7
+      size: 15806
+    - path: data/splits/train.csv
+      hash: md5
+      md5: de4b8920f56dec56311612f1947fedd0
+      size: 62998
+    - path: src/training/preprocess_stage.py
+      hash: md5
+      md5: eb49908d1842f1e7b7b9c7bb75cbb9b3
+      size: 3314
+    outs:
+    - path: data/processed/test_processed.csv
+      hash: md5
+      md5: dd554f928912f1cd4edbb50c6d86975b
+      size: 15579
+    - path: data/processed/train_processed.csv
+      hash: md5
+      md5: f7d2e8933b232d4e4628721ec3fd371d
+      size: 62220
+    - path: reports/pipeline/preprocess_summary.json
+      hash: md5
+      md5: f75c91a0b62802fcbc3b828c02da905e
+      size: 277
+  featurize:
+    cmd: python src/training/featurize_stage.py --train-path 
+      data/processed/train_processed.csv --test-path 
+      data/processed/test_processed.csv --target-column target 
+      --train-output-path data/features/train_features.csv --test-output-path 
+      data/features/test_features.csv --metadata-path 
+      reports/pipeline/feature_metadata.json
+    deps:
+    - path: data/processed/test_processed.csv
+      hash: md5
+      md5: dd554f928912f1cd4edbb50c6d86975b
+      size: 15579
+    - path: data/processed/train_processed.csv
+      hash: md5
+      md5: f7d2e8933b232d4e4628721ec3fd371d
+      size: 62220
+    - path: src/training/featurize_stage.py
+      hash: md5
+      md5: 93c8acf4b059a4fdfecb799d970902df
+      size: 2216
+    outs:
+    - path: data/features/test_features.csv
+      hash: md5
+      md5: 851400871ca5ad646d5c18abf7fb2b66
+      size: 15571
+    - path: data/features/train_features.csv
+      hash: md5
+      md5: 23109e5f5852ca34211024881f098781
+      size: 62185
+    - path: reports/pipeline/feature_metadata.json
+      hash: md5
+      md5: 05eb4fb48887d423214fe10fdbde5da2
+      size: 381
+  train:
+    cmd: python src/training/train.py --train-path 
+      data/features/train_features.csv --test-path 
+      data/features/test_features.csv --target-column target --model-dir models 
+      --report-dir reports
+    deps:
+    - path: data/features/test_features.csv
+      hash: md5
+      md5: 851400871ca5ad646d5c18abf7fb2b66
+      size: 15571
+    - path: data/features/train_features.csv
+      hash: md5
+      md5: 23109e5f5852ca34211024881f098781
+      size: 62185
+    - path: src/evaluation/diagnostics.py
+      hash: md5
+      md5: 2305b2e02a6ea7c1e8807c7ba28d07c2
+      size: 11999
+    - path: src/evaluation/evaluate.py
+      hash: md5
+      md5: 4c2a31bf4814804a3a8e272073368b77
+      size: 3537
+    - path: src/training/mlflow_setup.py
+      hash: md5
+      md5: 3b1f5b1d6cc258cf2653633f9a616380
+      size: 743
+    - path: src/training/train.py
+      hash: md5
+      md5: 3c12eedce2119053a872204c8b6e8f10
+      size: 15709
+    outs:
+    - path: models/best_model.pkl
+      hash: md5
+      md5: 79d2c5a468c92583e31315d3aa38e4d7
+      size: 259190
+    - path: models/feature_columns.json
+      hash: md5
+      md5: 6901e01a71bac5c06f78b2a69c615822
+      size: 500
+    - path: reports/best_model_summary.json
+      hash: md5
+      md5: 5ffa1abc8ee01fbee7866db892dcf462
+      size: 456
+    - path: reports/data_drift_report.json
+      hash: md5
+      md5: 2825f8c6be1081e3b48b80b94d93b7f7
+      size: 1507
+    - path: reports/data_leakage_report.json
+      hash: md5
+      md5: dc3c43b8817406ae64435ea30376aabe
+      size: 245
+    - path: reports/metrics.json
+      hash: md5
+      md5: 21011dfd815e5bfe4d3ef5b349e4d674
+      size: 189
+    - path: reports/mlflow_run_summary.csv
+      hash: md5
+      md5: 705c6defef46e0a3fcfb0c65b283f7f9
+      size: 1802
+    - path: reports/model_diagnostics_report.json
+      hash: md5
+      md5: 9f6a6ab291987f6a5076bd3e284bff56
+      size: 2278
