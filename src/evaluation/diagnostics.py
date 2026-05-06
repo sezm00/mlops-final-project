@@ -1,13 +1,11 @@
 # =========================
-# Model, leakage, and drift diagnostics
+# Model and leakage diagnostics
 # =========================
 
 import json
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-from scipy.stats import ks_2samp
 
 
 def _safe_float(value):
@@ -33,11 +31,10 @@ def check_data_leakage(
     Run practical data leakage checks.
 
     Checks included:
-    1. Target column accidentally included as a feature.
-    2. Duplicate feature rows between train and test.
-    3. Feature columns that are identical to the target.
-    4. Numeric features that are suspiciously correlated with the target.
-    5. Categorical features that almost perfectly identify the target.
+    1. Duplicate feature rows between train and test.
+    2. Feature columns that are identical to the target.
+    3. Numeric features that are suspiciously correlated with the target.
+    4. Categorical features that almost perfectly identify the target.
 
     These checks cannot prove there is no leakage, but they catch common problems.
     """
@@ -54,9 +51,6 @@ def check_data_leakage(
         raise ValueError(f"Target column '{target_column}' not found in test data.")
 
     feature_columns = [col for col in train_df.columns if col != target_column]
-
-    if target_column in feature_columns:
-        warnings.append("Target column appears inside feature columns.")
 
     train_feature_hashes = pd.util.hash_pandas_object(
         train_df[feature_columns].astype(str),
@@ -162,117 +156,6 @@ def check_data_leakage(
     return report
 
 
-def check_data_drift(
-    train_df,
-    test_df,
-    target_column,
-    output_dir="reports",
-    numeric_pvalue_threshold=0.05,
-    numeric_stat_threshold=0.20,
-    categorical_tvd_threshold=0.20,
-):
-    """
-    Compare train and test distributions to detect possible data drift.
-
-    Numeric features:
-    - Uses Kolmogorov-Smirnov test.
-    - Flags drift when p-value is low and KS statistic is meaningful.
-
-    Categorical features:
-    - Uses total variation distance between distributions.
-    - Flags drift when distribution shift is above threshold.
-    """
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    feature_columns = [col for col in train_df.columns if col != target_column]
-
-    drift_results = {}
-    warnings = []
-
-    for col in feature_columns:
-        train_col = train_df[col].dropna()
-        test_col = test_df[col].dropna()
-
-        if train_col.empty or test_col.empty:
-            continue
-
-        if pd.api.types.is_numeric_dtype(train_col):
-            try:
-                ks_stat, p_value = ks_2samp(train_col, test_col)
-
-                drift_detected = (
-                    p_value < numeric_pvalue_threshold
-                    and ks_stat >= numeric_stat_threshold
-                )
-
-                drift_results[col] = {
-                    "type": "numeric",
-                    "ks_statistic": _safe_float(ks_stat),
-                    "p_value": _safe_float(p_value),
-                    "drift_detected": bool(drift_detected),
-                }
-
-                if drift_detected:
-                    warnings.append(
-                        f"Numeric drift detected in '{col}' "
-                        f"(KS={ks_stat:.4f}, p={p_value:.4f})."
-                    )
-
-            except Exception as error:
-                drift_results[col] = {
-                    "type": "numeric",
-                    "error": str(error),
-                }
-
-        else:
-            try:
-                train_dist = train_col.astype(str).value_counts(normalize=True)
-                test_dist = test_col.astype(str).value_counts(normalize=True)
-
-                all_categories = sorted(set(train_dist.index).union(set(test_dist.index)))
-
-                train_probs = np.array([train_dist.get(cat, 0.0) for cat in all_categories])
-                test_probs = np.array([test_dist.get(cat, 0.0) for cat in all_categories])
-
-                tvd = 0.5 * np.abs(train_probs - test_probs).sum()
-
-                drift_detected = tvd >= categorical_tvd_threshold
-
-                drift_results[col] = {
-                    "type": "categorical",
-                    "total_variation_distance": _safe_float(tvd),
-                    "drift_detected": bool(drift_detected),
-                }
-
-                if drift_detected:
-                    warnings.append(
-                        f"Categorical drift detected in '{col}' "
-                        f"(TVD={tvd:.4f})."
-                    )
-
-            except Exception as error:
-                drift_results[col] = {
-                    "type": "categorical",
-                    "error": str(error),
-                }
-
-    status = "PASS" if not warnings else "WARNING"
-
-    report = {
-        "status": status,
-        "warnings": warnings,
-        "drift_results": drift_results,
-    }
-
-    report_path = output_path / "data_drift_report.json"
-
-    with open(report_path, "w", encoding="utf-8") as file:
-        json.dump(report, file, indent=4)
-
-    return report
-
-
 def evaluate_overfit_underfit(
     model_name,
     train_metrics,
@@ -288,13 +171,12 @@ def evaluate_overfit_underfit(
     Create a model quality verdict based on train/test performance.
 
     Classification:
-    - Good model: test score is high and train-test gap is acceptable.
     - Overfitting: train score is much higher than test score.
     - Underfitting: train and test scores are both weak.
+    - Weak model: test score is below a reasonable threshold.
 
     Regression:
     - Uses lower-is-better metric such as RMSE.
-    - Overfitting means test RMSE is much worse than train RMSE.
     """
     warnings = []
     verdict = "GOOD"

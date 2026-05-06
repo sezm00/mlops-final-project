@@ -79,23 +79,19 @@ def evaluate_model(model, X_test, y_test, output_dir="reports"):
             f1_score(y_test, y_pred, average="macro", zero_division=0)
         )
 
-        # ROC-AUC is only computed if the model supports predict_proba.
         if hasattr(model, "predict_proba"):
             try:
                 y_proba = model.predict_proba(X_test)
 
-                # Binary classification case.
                 if y_proba.shape[1] == 2:
                     metrics["roc_auc"] = float(roc_auc_score(y_test, y_proba[:, 1]))
 
-                # Multiclass classification case.
                 elif y_proba.shape[1] > 2:
                     metrics["roc_auc_ovr"] = float(
                         roc_auc_score(y_test, y_proba, multi_class="ovr")
                     )
 
             except Exception:
-                # ROC-AUC is optional, so evaluation should not fail if it cannot be computed.
                 pass
 
         report = classification_report(y_test, y_pred, zero_division=0)

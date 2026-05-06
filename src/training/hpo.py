@@ -106,8 +106,6 @@ def build_preprocessor(X_train):
 def get_hpo_candidates(problem_type, random_state):
     """
     Return HPO candidates and parameter grids.
-
-    This allows tuning across several boosting methods, not only Random Forest.
     """
     candidates = {}
 

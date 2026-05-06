@@ -3,6 +3,8 @@
 # =========================
 
 import argparse
+import json
+from pathlib import Path
 
 import mlflow
 from mlflow.tracking import MlflowClient
@@ -14,10 +16,10 @@ def find_best_run(experiment_name, metric_name, higher_is_better=True):
     """
     Find the best MLflow run based on the selected metric.
 
-    This function avoids fragile MLflow filter syntax by:
-    1. Getting all runs in the experiment.
-    2. Keeping only runs that contain the selected metric.
-    3. Sorting them in Python.
+    Logic:
+    1. Search all runs that contain the selected metric.
+    2. Sort by the metric.
+    3. If tied, prefer the run marked is_final_model=true.
     """
     client = MlflowClient()
 
@@ -31,7 +33,7 @@ def find_best_run(experiment_name, metric_name, higher_is_better=True):
 
     runs = client.search_runs(
         experiment_ids=[experiment.experiment_id],
-        max_results=500,
+        max_results=1000,
     )
 
     valid_runs = []
@@ -60,21 +62,45 @@ def find_best_run(experiment_name, metric_name, higher_is_better=True):
         reverse=higher_is_better,
     )
 
+    best_metric_value = valid_runs[0].data.metrics[metric_name]
+
+    tied_best_runs = [
+        run
+        for run in valid_runs
+        if run.data.metrics[metric_name] == best_metric_value
+    ]
+
+    final_model_runs = [
+        run
+        for run in tied_best_runs
+        if run.data.params.get("is_final_model") == "true"
+    ]
+
+    if final_model_runs:
+        return final_model_runs[0]
+
     return valid_runs[0]
+
+
+def load_json_if_exists(path):
+    """
+    Load a JSON file if it exists.
+    """
+    path = Path(path)
+
+    if not path.exists():
+        return {}
+
+    with open(path, "r", encoding="utf-8") as file:
+        return json.load(file)
 
 
 def register_and_promote_model(args):
     """
     Register the best MLflow model and promote it.
 
-    The code first tries classic MLflow stages:
-    - Staging
-    - Production
-
-    If the installed MLflow version does not support classic stage transitions,
-    it falls back to aliases:
-    - staging
-    - production
+    Feature importance metadata is stored if available, but the registered model
+    is chosen by best metric performance.
     """
     configure_mlflow(
         experiment_name=args.experiment_name,
@@ -98,6 +124,50 @@ def register_and_promote_model(args):
     )
 
     client = MlflowClient()
+
+    selected_features_payload = load_json_if_exists(args.selected_features_path)
+    best_model_summary = load_json_if_exists(args.best_model_summary_path)
+
+    selected_features = selected_features_payload.get("selected_features", [])
+    top_10_reference_features = selected_features_payload.get("top_10_reference_features", [])
+
+    final_model_choice = best_model_summary.get(
+        "final_model_choice",
+        best_run.data.params.get("final_model_choice", "best_metric_run"),
+    )
+
+    final_reason = best_model_summary.get(
+        "final_reason",
+        "Registered the run with the best selected metric.",
+    )
+
+    feature_importance_kept_as_analysis = best_model_summary.get(
+        "feature_importance_kept_as_analysis",
+        "unknown",
+    )
+
+    model_version_tags = {
+        "registered_metric_name": args.metric_name,
+        "registered_metric_value": str(best_metric_value),
+        "registered_run_id": run_id,
+        "registered_model_name_from_run": best_run.data.params.get("model_name", "unknown"),
+        "registered_model_stage_from_run": best_run.data.params.get("model_stage", "unknown"),
+        "final_model_choice": str(final_model_choice),
+        "final_reason": str(final_reason),
+        "feature_importance_kept_as_analysis": str(feature_importance_kept_as_analysis),
+        "selected_features_analysis": json.dumps(selected_features),
+        "top_10_reference_features": json.dumps(top_10_reference_features),
+        "feature_importance_method": "permutation_importance",
+        "feature_selection_method": "validation_cutoff_selection",
+    }
+
+    for tag_key, tag_value in model_version_tags.items():
+        client.set_model_version_tag(
+            name=args.registered_model_name,
+            version=result.version,
+            key=tag_key,
+            value=tag_value,
+        )
 
     promotion_message = ""
 
@@ -144,6 +214,12 @@ def register_and_promote_model(args):
     print(f"Metric value: {best_metric_value}")
     print(f"Registered model name: {args.registered_model_name}")
     print(f"Registered model version: {result.version}")
+    print(f"Model name from run: {best_run.data.params.get('model_name', 'unknown')}")
+    print(f"Model stage from run: {best_run.data.params.get('model_stage', 'unknown')}")
+    print(f"Final model choice: {final_model_choice}")
+    print(f"Feature importance kept as analysis: {feature_importance_kept_as_analysis}")
+    print(f"Selected features analysis: {selected_features}")
+    print(f"Top 10 reference features: {top_10_reference_features}")
     print(promotion_message)
 
 
@@ -158,6 +234,8 @@ def parse_args():
     parser.add_argument("--registered-model-name", default="BestMLOpsModel")
     parser.add_argument("--metric-name", default="f1_macro")
     parser.add_argument("--higher-is-better", action="store_true")
+    parser.add_argument("--selected-features-path", default="reports/feature_importance/selected_features.json")
+    parser.add_argument("--best-model-summary-path", default="reports/best_model_summary.json")
 
     return parser.parse_args()
 
