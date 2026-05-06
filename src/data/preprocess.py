@@ -9,7 +9,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
 
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE ,SMOTENC
 
 
 # ─────────────────────────────────────────────────────────────
@@ -21,8 +21,10 @@ def load_params():
 
 
 # ─────────────────────────────────────────────────────────────
-# Pipeline Builder (SIMPLIFIED)
+# Pipeline Builder
 # ─────────────────────────────────────────────────────────────
+
+
 def build_pipeline(params):
 
     numeric_features = params["preprocessing"]["numeric_features"]
@@ -31,39 +33,31 @@ def build_pipeline(params):
 
     imputer_strategy = params["preprocessing"]["imputer_strategy"]
 
+    # optional safety check
+    if imputer_strategy not in ["mean", "median", "most_frequent", "constant"]:
+        raise ValueError(f"Invalid imputer strategy: {imputer_strategy}")
+
     scaler_type = params["preprocessing"]["scaler"]
     if scaler_type != "standard":
         raise ValueError(f"Only 'standard' scaler supported, got {scaler_type}")
 
-    # ─────────────────────────────
-    # Numeric pipeline
-    # ─────────────────────────────
     numeric_pipeline = Pipeline([
         ("imputer", SimpleImputer(strategy=imputer_strategy)),
         ("scaler", StandardScaler())
     ])
 
-    # ─────────────────────────────
-    # SIMPLE OHE (no categories, no schema lock)
-    # ─────────────────────────────
     categorical_ohe = OneHotEncoder(
         drop="first",
         handle_unknown="ignore",
         sparse_output=False
     )
 
-    # ─────────────────────────────
-    # Binary encoding ALSO handled by OHE (simplest approach)
-    # ─────────────────────────────
     binary_ohe = OneHotEncoder(
         drop="if_binary",
         handle_unknown="ignore",
         sparse_output=False
     )
 
-    # ─────────────────────────────
-    # Column transformer
-    # ─────────────────────────────
     preprocessor = ColumnTransformer(
         transformers=[
             ("num", numeric_pipeline, numeric_features),
@@ -76,7 +70,6 @@ def build_pipeline(params):
     return Pipeline([
         ("preprocessing", preprocessor)
     ])
-
 
 # ─────────────────────────────────────────────────────────────
 # Split
@@ -102,14 +95,9 @@ def preprocess():
     params = load_params()
 
     ref_path = params["data"]["reference_path"]
-    prod_path = params["data"]["production_path"]
 
     train_path = params["data"]["train_path"]
     test_path = params["data"]["test_path"]
-
-    prod_out_path = params["data"]["production_path"].replace(
-        "production.csv", "production_processed.csv"
-    )
 
     pipeline_path = params["data"]["pipeline_path"]
     target = params["data"]["target_column"]
@@ -117,13 +105,11 @@ def preprocess():
     os.makedirs(os.path.dirname(train_path), exist_ok=True)
 
     # ─────────────────────────────
-    # Load data
+    # Load ONLY reference data
     # ─────────────────────────────
     reference_df = pd.read_csv(ref_path)
-    production_df = pd.read_csv(prod_path)
 
     print(f"[INFO] Reference: {reference_df.shape}")
-    print(f"[INFO] Production: {production_df.shape}")
 
     # ─────────────────────────────
     # Split reference
@@ -136,35 +122,69 @@ def preprocess():
     pipeline = build_pipeline(params)
 
     # ─────────────────────────────
-    # Fit + transform
+    # Fit + transform (REFERENCE ONLY)
     # ─────────────────────────────
     X_train_proc = pipeline.fit_transform(X_train, y_train)
     X_test_proc = pipeline.transform(X_test)
-    X_prod_proc = pipeline.transform(
-        production_df.drop(columns=[target], errors="ignore")
-    )
 
-    # FIXED FEATURE NAME EXTRACTION
     feature_names = pipeline.named_steps["preprocessing"].get_feature_names_out()
 
     X_train_df = pd.DataFrame(X_train_proc, columns=feature_names)
     X_test_df = pd.DataFrame(X_test_proc, columns=feature_names)
-    X_prod_df = pd.DataFrame(X_prod_proc, columns=feature_names)
 
-    print("[INFO] Pipeline fitted and applied")
+    print("[INFO] Pipeline fitted and applied on reference only")
 
-    # ─────────────────────────────
-    # SMOTE
-    # ─────────────────────────────
+    # # ─────────────────────────────
+    # # SMOTE
+    # # ─────────────────────────────
+    # if params["preprocessing"]["use_smote"]:
+    #     smote = SMOTE(
+    #         random_state=params["split"]["random_state"],
+    #         k_neighbors=params["preprocessing"]["smote_k_neighbors"]
+    #     )
+    #     X_train_final, y_train_final = smote.fit_resample(X_train_df, y_train)
+    # else:
+    #     X_train_final, y_train_final = X_train_df, y_train
+
+    # -------------------------------------------------
+    # SMOTE (SMOTENC for mixed features) - FIXED
+    # -------------------------------------------------
     if params["preprocessing"]["use_smote"]:
-        smote = SMOTE(
+
+        numeric_features = params["preprocessing"]["numeric_features"]
+
+        feature_cols = X_train_df.columns.tolist()
+
+        categorical_features = []
+
+        for i, col in enumerate(feature_cols):
+
+            # detect numeric columns after transformer prefix
+            is_numeric = any(num in col for num in numeric_features)
+
+            if not is_numeric:
+                categorical_features.append(i)
+
+        # SAFETY CHECK (VERY IMPORTANT)
+        if len(categorical_features) == len(feature_cols):
+            raise ValueError(
+                "SMOTENC error: all features detected as categorical. "
+                "Check numeric feature mapping after preprocessing."
+            )
+
+        smote = SMOTENC(
+            categorical_features=categorical_features,
             random_state=params["split"]["random_state"],
             k_neighbors=params["preprocessing"]["smote_k_neighbors"]
         )
-        X_train_final, y_train_final = smote.fit_resample(X_train_df, y_train)
+
+        X_train_final, y_train_final = smote.fit_resample(
+            X_train_df,
+            y_train
+        )
+
     else:
         X_train_final, y_train_final = X_train_df, y_train
-
     # ─────────────────────────────
     # Save datasets
     # ─────────────────────────────
@@ -175,11 +195,6 @@ def preprocess():
     test_out = X_test_df.copy()
     test_out[target] = y_test.values
     test_out.to_csv(test_path, index=False)
-
-    prod_out = X_prod_df.copy()
-    if target in production_df.columns:
-        prod_out[target] = production_df[target].values
-    prod_out.to_csv(prod_out_path, index=False)
 
     # ─────────────────────────────
     # Save pipeline

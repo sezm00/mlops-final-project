@@ -9,20 +9,21 @@ data:
   raw_path:                    data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
 
   # Stage 1 (prepare.py) outputs — cleaned, split, NO features yet
-  cleaned_reference_path:      data/splits/cleaned_reference.csv
-  cleaned_production_path:     data/splits/cleaned_production.csv
+  cleaned_reference_path:      data/processed/cleaned_reference.csv
+  production_path:     data/splits/production.csv
 
   # Stage 2 (featurize.py) outputs — row-level + stat features applied
-  reference_path:              data/splits/reference.csv
-  production_path:             data/splits/production.csv
+  reference_path:              data/processed/featurized_reference.csv
+ 
 
   # Stage 4 (preprocess.py) outputs — encoded, scaled, SMOTE'd
   train_path:                  data/splits/train.csv
   test_path:                   data/splits/test.csv
-  production_processed_path:   data/splits/production_processed.csv
 
-  pipeline_path:               data/processed/preprocessing_pipeline.pkl
-  stats_path:                  data/processed/reference_stats.json  # reference-only statistics
+
+  pipeline_path:               models/preprocessing_pipeline.joblib
+  feature_engineer_path:       models/feature_engineer.joblib
+
   target_column:               Churn
 
 # ── Cleaning ─────────────────────────────────────────────────────────────────
@@ -61,8 +62,8 @@ split:
 
 # ── Statistical Feature Engineering (reference-only statistics) ───────────────
 # All statistics and imputation values are computed ONLY from the reference set
-# and saved to stats_path. They are applied identically to train, test, and
-# production sets to guarantee consistent feature definitions with no leakage.
+
+
 stat_features:
   high_value_quantile: 0.75             # MonthlyCharges percentile → IsHighValueCustomer
 
@@ -74,6 +75,7 @@ encoding:
   - Dependents
   - PhoneService
   - PaperlessBilling
+  - SeniorCitizen
   ohe_columns:                           # one-hot encoded; fit on train, applied to all
     - MultipleLines
     - InternetService
@@ -111,14 +113,4 @@ preprocessing:
   use_smote:        true
   smote_k_neighbors: 5
 
-# ── Monitoring ────────────────────────────────────────────────────────────────
-monitoring:
-  drift_threshold:      0.20            # alert if > 20 % of features drift
-  noise_scale:          3.0             # σ multiplier for Gaussian drift injection
-  noisy_features:                       # features to perturb in drift report
-    - tenure
-    - MonthlyCharges
-    - TotalCharges
-  baseline_report_path: monitoring/evidently_reports/baseline_report.html
-  drift_report_path:    monitoring/evidently_reports/drift_report.html
-  prometheus_port:      8001
+
