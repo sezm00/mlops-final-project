@@ -1,55 +1,93 @@
-# dvc.yaml
-# ─────────────────────────────────────────────────────────────────────────────
-# DVC Pipeline — Telco Churn MLOps
-# Execution order: prepare → featurize  → preprocess
-# Run full pipeline : dvc repro
-# View DAG          : dvc dag
-# ─────────────────────────────────────────────────────────────────────────────
-
 stages:
-
- # ── Stage 1: Raw Split + Reference Cleaning (NO features) ───────────────────────────────
   prepare:
     cmd: python src/data/prepare.py
     deps:
-      - src/data/prepare.py
-      - configs/params.yaml
-      - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+    - src/data/prepare.py
+    - configs/params.yaml
+    - data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
     outs:
-      - data/processed/cleaned_reference.csv
-      - data/splits/production.csv
-
+    - data/processed/cleaned_reference.csv
+    - data/splits/production.csv
   featurize:
-    # cmd: PYTHONPATH=. python -m src.features.featurize
     cmd: python -m src.features.featurize
     deps:
-      - src/features/featurize.py
-      - src/features/feature_engineer.py
-      - configs/params.yaml
-      - data/processed/cleaned_reference.csv
+    - src/features/featurize.py
+    - src/features/feature_engineer.py
+    - configs/params.yaml
+    - data/processed/cleaned_reference.csv
     outs:
-      - data/processed/featurized_reference.csv
-      - models/feature_engineer.joblib
-
-
-
-  # ── Stage 3: Encoding + Scaling + SMOTE ───────────────────────────────────
+    - data/processed/featurized_reference.csv
+    - models/feature_engineer.joblib
   preprocess:
     cmd: python src/data/preprocess.py
     deps:
-      - src/data/preprocess.py
-      - configs/params.yaml
-      - data/processed/featurized_reference.csv
-  
-      
+    - src/data/preprocess.py
+    - configs/params.yaml
+    - data/processed/featurized_reference.csv
     params:
-      - configs/params.yaml:
-          - stat_features
-          - encoding
-          - preprocessing
-          - split.test_size
-          - split.random_state
+    - configs/params.yaml:
+      - stat_features
+      - encoding
+      - preprocessing
+      - split.test_size
+      - split.random_state
     outs:
-      - data/splits/train.csv
-      - data/splits/test.csv
-      - models/preprocessing_pipeline.joblib
+    - data/splits/train.csv
+    - data/splits/test.csv
+    - models/preprocessing_pipeline.joblib
+  train:
+    cmd: python src/training/train.py --train-path data/splits/train.csv --test-path
+      data/splits/test.csv --target-column target --model-dir models --report-dir
+      reports
+    deps:
+    - src/training/train.py
+    - src/training/mlflow_setup.py
+    - src/evaluation/evaluate.py
+    - src/evaluation/diagnostics.py
+    - data/splits/train.csv
+    - data/splits/test.csv
+    outs:
+    - models/best_model.pkl
+    - models/best_reference_model.pkl
+    - models/best_all_features_model.pkl
+    - models/best_selected_feature_model.pkl
+    - models/feature_columns.json
+    - reports/best_model_summary.json
+    - reports/selected_feature_model_summary.json
+    - reports/mlflow_run_summary.csv
+    - reports/model_diagnostics_report.json
+    - reports/data_leakage_report.json
+    - reports/feature_importance/all_feature_importance.csv
+    - reports/feature_importance/top_10_feature_importance.csv
+    - reports/feature_importance/top_10_features.json
+    - reports/feature_importance/feature_selection_results.json
+    - reports/feature_importance/selected_features.json
+    metrics:
+    - reports/metrics.json:
+        cache: false
+  hpo:
+    cmd: python src/training/hpo.py --train-path data/splits/train.csv --test-path
+      data/splits/test.csv --target-column target --model-dir models --report-dir
+      reports --n-iter 6 --cv 3
+    deps:
+    - src/training/hpo.py
+    - src/training/mlflow_setup.py
+    - src/evaluation/evaluate.py
+    - src/evaluation/diagnostics.py
+    - data/splits/train.csv
+    - data/splits/test.csv
+    outs:
+    - models/best_tuned_model.pkl
+    - reports/hpo_summary.json
+    - reports/hpo_diagnostics_report.json
+  register:
+    cmd: python src/training/register_model.py --experiment-name mlops_training_experiments
+      --registered-model-name BestMLOpsModel --metric-name f1_macro --higher-is-better
+      --selected-features-path reports/feature_importance/selected_features.json --best-model-summary-path
+      reports/best_model_summary.json
+    deps:
+    - src/training/register_model.py
+    - src/training/mlflow_setup.py
+    - reports/feature_importance/selected_features.json
+    - reports/best_model_summary.json
+    always_changed: true
