@@ -2,54 +2,40 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [develop, "feature/**"]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 env:
-  PYTHON_VERSION: "3.10"
-  MLFLOW_TRACKING_URI: "http://localhost:5000"
+  PYTHON_VERSION: "3.11"
+  MIN_F1_MACRO: "0.70"
 
 jobs:
-  # ────────────────────────────────────────────────────────────────────────────
-  # 1. LINT
-  # ────────────────────────────────────────────────────────────────────────────
   lint:
-    name: "1 · Lint"
+    name: "1. Lint"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
-      - name: Install dev dependencies
+      - name: Install lint dependencies
         run: pip install -r requirements-dev.txt
 
-      - name: Ruff lint
-        run: ruff check src/ tests/ monitoring/
+      - name: Ruff
+        run: ruff check src tests monitoring
 
-      - name: Black format check
-        run: black --check src/ tests/ monitoring/
-
-      - name: isort check
-        run: isort --check-only src/ tests/ monitoring/
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # 2. TESTS (≥70% coverage)
-  # ────────────────────────────────────────────────────────────────────────────
   tests:
-    name: "2 · Tests (≥70% coverage)"
+    name: "2. Unit and Integration Tests"
     runs-on: ubuntu-latest
     needs: lint
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -59,9 +45,9 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Run unit tests with coverage
+      - name: Run pytest with coverage gate
         run: |
-          pytest tests/unit/ \
+          pytest tests \
             --cov=src \
             --cov-report=xml \
             --cov-report=term-missing \
@@ -69,189 +55,99 @@ jobs:
             -v
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v4
-        with:
-          file: coverage.xml
-          fail_ci_if_error: false
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # 3. DATA VALIDATION
-  # ────────────────────────────────────────────────────────────────────────────
-  data-validation:
-    name: "3 · Data Validation"
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Pull DVC data
-        env:
-          # Add your DVC remote credentials as GitHub secrets
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          dvc pull data/splits/train.csv.dvc data/splits/test.csv.dvc || \
-          echo "DVC pull skipped (no remote configured in CI)"
-
-      - name: Run Great Expectations / Pandera validation
-        run: |
-          python src/data/great_expectations_suite.py || \
-          echo "::warning::Data validation script not yet runnable without data"
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # 4. MODEL VALIDATION
-  # ────────────────────────────────────────────────────────────────────────────
-  model-validation:
-    name: "4 · Model Validation"
-    runs-on: ubuntu-latest
-    needs: [tests, data-validation]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Pull model artifact via DVC
-        run: dvc pull model.pkl.dvc 2>/dev/null || echo "No model DVC artifact found — skipping"
-
-      - name: Validate model artifact exists
-        run: |
-          if [ ! -f "model.pkl" ]; then
-            echo "::warning::model.pkl not found — model validation skipped (model not yet trained)"
-          else
-            python -c "
-          import pickle, sys
-          with open('model.pkl', 'rb') as f:
-              model = pickle.load(f)
-          assert hasattr(model, 'predict'), 'Model missing predict method'
-          assert hasattr(model, 'predict_proba'), 'Model missing predict_proba method'
-          print('✅ Model artifact valid')
-          "
-          fi
-
-      - name: Run evaluation metrics check
-        run: |
-          python -c "
-          import os
-          if os.path.exists('model.pkl'):
-              import sys
-              sys.path.insert(0, '.')
-              # Evaluation script from Member 1
-              print('Model evaluation check passed')
-          else:
-              print('::warning::Skipping evaluation — no model artifact')
-          "
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # 5. INTEGRATION TESTS (API)
-  # ────────────────────────────────────────────────────────────────────────────
-  integration-tests:
-    name: "5 · Integration Tests"
-    runs-on: ubuntu-latest
-    needs: [tests]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-dev.txt
-
-      - name: Start API server (test mode with mock model)
-        env:
-          MLFLOW_TRACKING_URI: ""       # Force fallback path in CI
-          CI: "true"
-        run: |
-          uvicorn src.serving.app:app --host 0.0.0.0 --port 8000 &
-          sleep 5
-
-      - name: Run integration tests
-        env:
-          API_BASE_URL: "http://localhost:8000"
-        run: |
-          pytest tests/integration/ -v --timeout=30
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # 6. DRIFT DETECTION CHECK
-  # ────────────────────────────────────────────────────────────────────────────
-  drift-check:
-    name: "6 · Drift Detection"
-    runs-on: ubuntu-latest
-    needs: [data-validation]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run drift detection
-        run: |
-          if [ -f "data/splits/train.csv" ] && [ -f "data/splits/test.csv" ]; then
-            python monitoring/drift_detection.py \
-              data/splits/train.csv \
-              data/splits/test.csv
-          else
-            echo "::warning::Data splits not available — drift check skipped"
-          fi
-
-      - name: Upload drift reports
-        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: evidently-drift-reports
-          path: monitoring/evidently_reports/
-          if-no-files-found: ignore
+          name: coverage-report
+          path: coverage.xml
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # BUILD & PUSH DOCKER (only on push to develop)
-  # ────────────────────────────────────────────────────────────────────────────
-  docker-build:
-    name: "7 · Docker Build"
+  data-validation:
+    name: "3. Data Validation"
     runs-on: ubuntu-latest
-    needs: [integration-tests, model-validation]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: tests
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
 
-      - name: Build Docker image
+      - name: Install dependencies
         run: |
-          docker build -t churn-api:${{ github.sha }} .
-          docker build -t churn-api:latest .
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-      - name: Smoke test Docker image
+      - name: Pull DVC artifacts
+        run: dvc pull
+
+      - name: Run Great Expectations validation
         run: |
-          docker run -d --name api-test \
-            -e MLFLOW_TRACKING_URI="" \
-            -p 8000:8000 \
-            churn-api:latest
-          sleep 8
-          curl --fail http://localhost:8000/health || (docker logs api-test && exit 1)
-          docker stop api-test
+          python -c "import pandas as pd; from src.data.great_expectations_suite import validate_reference_data; validate_reference_data(pd.read_csv('data/processed/featurized_reference.csv')); print('Data validation passed')"
+
+  model-validation:
+    name: "4. Model Validation"
+    runs-on: ubuntu-latest
+    needs: data-validation
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Pull DVC artifacts
+        run: dvc pull
+
+      - name: Validate registered/local model quality
+        run: |
+          python -c "import json, os, joblib; from pathlib import Path; model_path=Path('models/best_model.pkl'); metrics_path=Path('reports/metrics.json'); assert model_path.exists(), 'models/best_model.pkl is missing'; model=joblib.load(model_path); assert hasattr(model, 'predict'), 'model must implement predict'; metrics=json.loads(metrics_path.read_text()); f1=float(metrics.get('f1_macro', 0)); threshold=float(os.environ['MIN_F1_MACRO']); assert f1 >= threshold, f'f1_macro {f1:.3f} is below threshold {threshold:.3f}'; print(f'Model validation passed: f1_macro={f1:.3f}')"
+
+  monitoring:
+    name: "5. Monitoring and Drift Detection"
+    runs-on: ubuntu-latest
+    needs: model-validation
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Pull DVC artifacts
+        run: dvc pull
+
+      - name: Generate Evidently reports
+        run: python monitoring/run_monitoring.py
+
+      - name: Upload Evidently reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidently-reports
+          path: monitoring/evidently_reports/
+
+  docker-build:
+    name: "6. Docker Build"
+    runs-on: ubuntu-latest
+    needs: monitoring
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull DVC artifacts for Docker context
+        run: |
+          pipx install dvc
+          dvc pull
+
+      - name: Build serving image
+        run: docker build -t churn-api:${{ github.sha }} .

@@ -62,7 +62,9 @@ def check_data_leakage(
         index=False,
     )
 
-    overlap_count = int(len(set(train_feature_hashes).intersection(set(test_feature_hashes))))
+    overlap_count = int(
+        len(set(train_feature_hashes).intersection(set(test_feature_hashes)))
+    )
     details["train_test_feature_overlap_count"] = overlap_count
 
     if overlap_count > 0:
@@ -74,8 +76,10 @@ def check_data_leakage(
 
     for col in feature_columns:
         try:
-            if train_df[col].reset_index(drop=True).equals(
-                train_df[target_column].reset_index(drop=True)
+            if (
+                train_df[col]
+                .reset_index(drop=True)
+                .equals(train_df[target_column].reset_index(drop=True))
             ):
                 identical_to_target.append(col)
         except Exception:
@@ -90,9 +94,11 @@ def check_data_leakage(
 
     high_target_correlations = {}
 
-    numeric_columns = train_df[feature_columns].select_dtypes(
-        include=["int64", "float64", "int32", "float32"]
-    ).columns.tolist()
+    numeric_columns = (
+        train_df[feature_columns]
+        .select_dtypes(include=["int64", "float64", "int32", "float32"])
+        .columns.tolist()
+    )
 
     if pd.api.types.is_numeric_dtype(train_df[target_column]):
         for col in numeric_columns:
@@ -115,13 +121,17 @@ def check_data_leakage(
 
     suspicious_categorical_features = {}
 
-    categorical_columns = train_df[feature_columns].select_dtypes(
-        include=["object", "category", "bool"]
-    ).columns.tolist()
+    categorical_columns = (
+        train_df[feature_columns]
+        .select_dtypes(include=["object", "category", "bool"])
+        .columns.tolist()
+    )
 
     for col in categorical_columns:
         try:
-            crosstab = pd.crosstab(train_df[col], train_df[target_column], normalize="index")
+            crosstab = pd.crosstab(
+                train_df[col], train_df[target_column], normalize="index"
+            )
 
             if not crosstab.empty:
                 max_class_purity = crosstab.max(axis=1).max()
@@ -188,7 +198,9 @@ def evaluate_overfit_underfit(
         return {
             "model_name": model_name,
             "verdict": "UNKNOWN",
-            "warnings": [f"Could not evaluate overfitting because '{primary_metric}' is missing."],
+            "warnings": [
+                f"Could not evaluate overfitting because '{primary_metric}' is missing."
+            ],
             "primary_metric": primary_metric,
             "train_score": train_score,
             "test_score": test_score,
@@ -205,7 +217,10 @@ def evaluate_overfit_underfit(
                 f"test {primary_metric}={test_score:.4f}, gap={gap:.4f}."
             )
 
-        elif train_score < classification_underfit_threshold and test_score < classification_underfit_threshold:
+        elif (
+            train_score < classification_underfit_threshold
+            and test_score < classification_underfit_threshold
+        ):
             verdict = "UNDERFITTING_WARNING"
             warnings.append(
                 f"Possible underfitting: both train and test {primary_metric} are low "

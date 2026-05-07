@@ -5,10 +5,5 @@ global:
 scrape_configs:
   - job_name: "churn-api"
     static_configs:
-      - targets: ["api:8000"]
-    metrics_path: "/metrics"
-    scrape_interval: 10s
-
-  - job_name: "prometheus"
-    static_configs:
-      - targets: ["localhost:9090"]
+      - targets: ["churn-api:8000"]
+    metrics_path: /metrics

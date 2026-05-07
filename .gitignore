@@ -260,6 +260,11 @@ temp/
 
 # Monitoring
 monitoring/evidently_reports/
+!monitoring/evidently_reports/
+!monitoring/evidently_reports/.gitkeep
+!monitoring/evidently_reports/*.html
+!monitoring/evidently_reports/*.json
+!monitoring/evidently_reports/*.log
 
 # Databases
 *.db

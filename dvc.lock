@@ -13,8 +13,8 @@ stages:
       size: 977501
     - path: src/data/prepare.py
       hash: md5
-      md5: 7e5ec00b43e6a538f3349960ad0acd59
-      size: 10581
+      md5: a324ade431361b1351e82ffc1c24c8fa
+      size: 10625
     outs:
     - path: data/processed/cleaned_reference.csv
       hash: md5
@@ -37,12 +37,12 @@ stages:
       size: 509550
     - path: src/features/feature_engineer.py
       hash: md5
-      md5: 2314aa9b72f10655b98199951755705b
-      size: 1847
+      md5: 96f07273de7b16edbdedc110f97d402a
+      size: 1836
     - path: src/features/featurize.py
       hash: md5
-      md5: b79a7f9c648857c99dbd8d76652b840b
-      size: 1677
+      md5: 81727cdfe1076e5f3bed1ff0bd19d4be
+      size: 1682
     outs:
     - path: data/processed/featurized_reference.csv
       hash: md5
@@ -89,8 +89,8 @@ stages:
       size: 797080
     - path: src/data/preprocess.py
       hash: md5
-      md5: 411f5e388ab0fd2034ba3e670c165d90
-      size: 8531
+      md5: f1634be6087296fc15fb52d2402f909c
+      size: 8420
     params:
       configs/params.yaml:
         encoding:
@@ -144,7 +144,7 @@ stages:
       md5: d606607535083f1cd19e77328fdec615
       size: 10973
   train:
-    cmd: python src/training/train.py --train-path data/splits/train.csv 
+    cmd: python -m src.training.train --train-path data/splits/train.csv 
       --test-path data/splits/test.csv --target-column Churn --model-dir models 
       --report-dir reports
     deps:
@@ -158,20 +158,20 @@ stages:
       size: 1395567
     - path: src/evaluation/diagnostics.py
       hash: md5
-      md5: 443e7b34d68a2ee1499bb8fef64d27c3
-      size: 8469
+      md5: 105f57a1d9596023c78bacf336e7df37
+      size: 8670
     - path: src/evaluation/evaluate.py
       hash: md5
-      md5: 56b5666cfc8106bfbc323314e6c252e2
-      size: 3394
+      md5: a60aa1e95127b202c9822c599e1a0b57
+      size: 3454
     - path: src/training/mlflow_setup.py
       hash: md5
-      md5: 19a4c3645e7e1cd5238742fb06e46953
-      size: 771
+      md5: 92509e268fdfdd0089334b813cd3fd5b
+      size: 803
     - path: src/training/train.py
       hash: md5
-      md5: dbce616aee4ab41c1c5d57543581427b
-      size: 38836
+      md5: 064caa1e8101ea979379a5ebed332fbb
+      size: 39445
     outs:
     - path: models/best_all_features_model.pkl
       hash: md5
@@ -191,11 +191,11 @@ stages:
       size: 492742
     - path: models/feature_columns.json
       hash: md5
-      md5: b0fe545f16926f2f61f85436dd0f3717
+      md5: aed84a7f44a54f2ce12828c1d5445a67
       size: 3619
     - path: reports/best_model_summary.json
       hash: md5
-      md5: 7d5a3e487efa0b6b1adf14bef4777a34
+      md5: edadbc0050f23ee4ab6ea1000f8f448e
       size: 3838
     - path: reports/data_leakage_report.json
       hash: md5
@@ -264,8 +264,8 @@ stages:
       size: 15703
     - path: src/training/mlflow_setup.py
       hash: md5
-      md5: 19a4c3645e7e1cd5238742fb06e46953
-      size: 771
+      md5: 16c1c60cc3b27c8e33ac25806ea50424
+      size: 799
     outs:
     - path: models/best_tuned_model.pkl
       hash: md5
@@ -288,7 +288,7 @@ stages:
     deps:
     - path: reports/best_model_summary.json
       hash: md5
-      md5: 7d5a3e487efa0b6b1adf14bef4777a34
+      md5: 7fc8450bd6b7f802dced3d01bcc3bba7
       size: 3838
     - path: reports/feature_importance/selected_features.json
       hash: md5
@@ -296,8 +296,8 @@ stages:
       size: 1425
     - path: src/training/mlflow_setup.py
       hash: md5
-      md5: 19a4c3645e7e1cd5238742fb06e46953
-      size: 771
+      md5: 16c1c60cc3b27c8e33ac25806ea50424
+      size: 799
     - path: src/training/register_model.py
       hash: md5
       md5: 5a9ca5ea0d20fdddb7ff66399f58f3d6

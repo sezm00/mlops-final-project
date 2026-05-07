@@ -7,18 +7,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
-    confusion_matrix,
-    f1_score,
-    mean_absolute_error,
-    mean_squared_error,
-    precision_score,
-    r2_score,
-    recall_score,
-    roc_auc_score,
-)
+from sklearn.metrics import (accuracy_score, classification_report,
+                             confusion_matrix, f1_score, mean_absolute_error,
+                             mean_squared_error, precision_score, r2_score,
+                             recall_score, roc_auc_score)
 
 
 def detect_problem_type(y):
@@ -97,7 +89,9 @@ def evaluate_model(model, X_test, y_test, output_dir="reports"):
         report = classification_report(y_test, y_pred, zero_division=0)
         confusion = confusion_matrix(y_test, y_pred)
 
-        with open(output_path / "classification_report.txt", "w", encoding="utf-8") as file:
+        with open(
+            output_path / "classification_report.txt", "w", encoding="utf-8"
+        ) as file:
             file.write(report)
 
         pd.DataFrame(confusion).to_csv(

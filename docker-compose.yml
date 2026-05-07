@@ -1,102 +1,79 @@
-version: "3.9"
-
 services:
-
-  # ── MLflow Tracking Server (provided by Member 1) ──────────────────────────
-  mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.11.3
-    container_name: mlops-mlflow
-    ports:
-      - "5000:5000"
-    volumes:
-      - mlflow_data:/mlflow
-    command: >
-      mlflow server
-      --backend-store-uri sqlite:///mlflow/mlflow.db
-      --default-artifact-root /mlflow/artifacts
-      --host 0.0.0.0
-      --port 5000
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
-    networks:
-      - mlops-net
-
-  # ── Churn Prediction API ───────────────────────────────────────────────────
-  api:
+  churn-api:
     build:
       context: .
       dockerfile: Dockerfile
-      target: runtime
-    container_name: mlops-api
+    container_name: churn-api
     ports:
       - "8000:8000"
     environment:
-      MLFLOW_TRACKING_URI: http://mlflow:5000
-      MLFLOW_MODEL_NAME: churn-model
-      MLFLOW_MODEL_STAGE: Production
-      MLFLOW_MODEL_PATH: /app/model.pkl
+      MLFLOW_TRACKING_URI: http://mlflow:5001
+      MLFLOW_MODEL_NAME: BestMLOpsModel
+      PYTHONPATH: /app
     volumes:
-      - ./model.pkl:/app/model.pkl:ro          # fallback local model
-      - ./monitoring:/app/monitoring            # drift reports written here
+      - ./models:/app/models:ro
+      - ./reports:/app/reports:ro
+      - ./configs:/app/configs:ro
     depends_on:
       mlflow:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 20s
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()",
+        ]
+      interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 30s
-    networks:
-      - mlops-net
+      retries: 3
+      start_period: 20s
     restart: unless-stopped
 
-  # ── Prometheus ─────────────────────────────────────────────────────────────
+  mlflow:
+    image: python:3.11.9-slim
+    container_name: mlflow-server
+    command: >
+      bash -c "pip install mlflow==2.19.0 sqlalchemy --quiet &&
+               mlflow server
+               --backend-store-uri sqlite:///mlruns/mlflow.db
+               --default-artifact-root /mlruns/artifacts
+               --host 0.0.0.0
+               --port 5001"
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./mlruns:/mlruns
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5001/health')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
   prometheus:
-    image: prom/prometheus:v2.51.2
-    container_name: mlops-prometheus
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
       - "--web.console.libraries=/usr/share/prometheus/console_libraries"
       - "--web.console.templates=/usr/share/prometheus/consoles"
     depends_on:
-      - api
-    networks:
-      - mlops-net
-    restart: unless-stopped
-
-  # ── Grafana (optional — for dashboards) ────────────────────────────────────
-  grafana:
-    image: grafana/grafana:10.4.2
-    container_name: mlops-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin
-      GF_USERS_ALLOW_SIGN_UP: "false"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    depends_on:
-      - prometheus
-    networks:
-      - mlops-net
+      - churn-api
     restart: unless-stopped
 
 volumes:
-  mlflow_data:
-  prometheus_data:
-  grafana_data:
-
-networks:
-  mlops-net:
-    driver: bridge
+  mlruns:

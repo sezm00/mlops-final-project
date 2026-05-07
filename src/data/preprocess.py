@@ -1,15 +1,14 @@
 import os
-import yaml
+
 import joblib
 import pandas as pd
-
+import yaml
+from imblearn.over_sampling import SMOTENC
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.impute import SimpleImputer
-
-from imblearn.over_sampling import SMOTE ,SMOTENC
 
 
 # ─────────────────────────────────────────────────────────────
@@ -41,21 +40,19 @@ def build_pipeline(params):
     if scaler_type != "standard":
         raise ValueError(f"Only 'standard' scaler supported, got {scaler_type}")
 
-    numeric_pipeline = Pipeline([
-        ("imputer", SimpleImputer(strategy=imputer_strategy)),
-        ("scaler", StandardScaler())
-    ])
+    numeric_pipeline = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy=imputer_strategy)),
+            ("scaler", StandardScaler()),
+        ]
+    )
 
     categorical_ohe = OneHotEncoder(
-        drop="first",
-        handle_unknown="ignore",
-        sparse_output=False
+        drop="first", handle_unknown="ignore", sparse_output=False
     )
 
     binary_ohe = OneHotEncoder(
-        drop="if_binary",
-        handle_unknown="ignore",
-        sparse_output=False
+        drop="if_binary", handle_unknown="ignore", sparse_output=False
     )
 
     preprocessor = ColumnTransformer(
@@ -64,12 +61,11 @@ def build_pipeline(params):
             ("cat", categorical_ohe, categorical_features),
             ("bin", binary_ohe, binary_features),
         ],
-        remainder="drop"
+        remainder="drop",
     )
 
-    return Pipeline([
-        ("preprocessing", preprocessor)
-    ])
+    return Pipeline([("preprocessing", preprocessor)])
+
 
 # ─────────────────────────────────────────────────────────────
 # Split
@@ -83,7 +79,7 @@ def split_data(df, target, params):
         y,
         test_size=params["split"]["test_size"],
         random_state=params["split"]["random_state"],
-        stratify=y
+        stratify=y,
     )
 
 
@@ -175,13 +171,10 @@ def preprocess():
         smote = SMOTENC(
             categorical_features=categorical_features,
             random_state=params["split"]["random_state"],
-            k_neighbors=params["preprocessing"]["smote_k_neighbors"]
+            k_neighbors=params["preprocessing"]["smote_k_neighbors"],
         )
 
-        X_train_final, y_train_final = smote.fit_resample(
-            X_train_df,
-            y_train
-        )
+        X_train_final, y_train_final = smote.fit_resample(X_train_df, y_train)
 
     else:
         X_train_final, y_train_final = X_train_df, y_train
@@ -200,12 +193,8 @@ def preprocess():
     # Save pipeline
     # ─────────────────────────────
     joblib.dump(
-        {
-            "pipeline": pipeline,
-            "feature_names": feature_names,
-            "params": params
-        },
-        pipeline_path
+        {"pipeline": pipeline, "feature_names": feature_names, "params": params},
+        pipeline_path,
     )
 
     print(f"[INFO] Pipeline saved → {pipeline_path}")

@@ -10,12 +10,12 @@ from pathlib import Path
 import joblib
 import mlflow
 import mlflow.sklearn
-import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import (GradientBoostingClassifier,
+                              GradientBoostingRegressor,
+                              RandomForestClassifier, RandomForestRegressor)
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression, Ridge
@@ -24,11 +24,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.svm import SVC
 
-from src.evaluation.diagnostics import (
-    check_data_leakage,
-    evaluate_overfit_underfit,
-    save_model_diagnostics_report,
-)
+from src.evaluation.diagnostics import (check_data_leakage,
+                                        evaluate_overfit_underfit,
+                                        save_model_diagnostics_report)
 from src.evaluation.evaluate import detect_problem_type, evaluate_model
 from src.training.mlflow_setup import configure_mlflow
 
@@ -41,7 +39,9 @@ def optional_import(module_name, class_name):
         module = importlib.import_module(module_name)
         return getattr(module, class_name)
     except Exception as error:
-        print(f"Optional model skipped: {class_name} from {module_name}. Reason: {error}")
+        print(
+            f"Optional model skipped: {class_name} from {module_name}. Reason: {error}"
+        )
         return None
 
 
@@ -63,7 +63,9 @@ def load_split_data(train_path, test_path, target_column):
     test_df = pd.read_csv(test_path)
 
     if target_column not in train_df.columns:
-        raise ValueError(f"Target column '{target_column}' was not found in train data.")
+        raise ValueError(
+            f"Target column '{target_column}' was not found in train data."
+        )
 
     if target_column not in test_df.columns:
         raise ValueError(f"Target column '{target_column}' was not found in test data.")
@@ -241,7 +243,9 @@ def get_scorer_name(problem_type):
     return "neg_root_mean_squared_error"
 
 
-def make_train_validation_split(X_train, y_train, problem_type, validation_size, random_state):
+def make_train_validation_split(
+    X_train, y_train, problem_type, validation_size, random_state
+):
     """
     Create train-core and validation split for feature-importance analysis only.
     """
@@ -300,7 +304,9 @@ def compute_permutation_feature_importance(
         }
     )
 
-    importance_df["importance_positive"] = importance_df["importance_mean"].clip(lower=0)
+    importance_df["importance_positive"] = importance_df["importance_mean"].clip(
+        lower=0
+    )
     importance_df = importance_df.sort_values("importance_mean", ascending=False)
 
     total_positive_importance = importance_df["importance_positive"].sum()
@@ -309,13 +315,17 @@ def compute_permutation_feature_importance(
         importance_df["importance_ratio"] = (
             importance_df["importance_positive"] / total_positive_importance
         )
-        importance_df["cumulative_importance"] = importance_df["importance_ratio"].cumsum()
+        importance_df["cumulative_importance"] = importance_df[
+            "importance_ratio"
+        ].cumsum()
     else:
         importance_df["importance_ratio"] = 0.0
         importance_df["cumulative_importance"] = 0.0
 
     importance_df.to_csv(output_path / "all_feature_importance.csv", index=False)
-    importance_df.head(10).to_csv(output_path / "top_10_feature_importance.csv", index=False)
+    importance_df.head(10).to_csv(
+        output_path / "top_10_feature_importance.csv", index=False
+    )
 
     top_10_payload = {
         "method": "permutation_importance",
@@ -439,12 +449,18 @@ def select_best_feature_subset(
             if higher_is_better:
                 if score > best_result["validation_score"]:
                     best_result = result
-                elif score == best_result["validation_score"] and len(selected_features) < best_result["feature_count"]:
+                elif (
+                    score == best_result["validation_score"]
+                    and len(selected_features) < best_result["feature_count"]
+                ):
                     best_result = result
             else:
                 if score < best_result["validation_score"]:
                     best_result = result
-                elif score == best_result["validation_score"] and len(selected_features) < best_result["feature_count"]:
+                elif (
+                    score == best_result["validation_score"]
+                    and len(selected_features) < best_result["feature_count"]
+                ):
                     best_result = result
 
     return best_result, results
@@ -494,7 +510,9 @@ def train_with_mlflow(args):
     diagnostic_summaries = []
 
     for model_name, estimator in candidate_models.items():
-        preprocessor, numeric_features, categorical_features = build_preprocessor(X_train)
+        preprocessor, numeric_features, categorical_features = build_preprocessor(
+            X_train
+        )
 
         with mlflow.start_run(run_name=f"experiment_{model_name}_all_features"):
             pipeline = Pipeline(
@@ -654,7 +672,9 @@ def train_with_mlflow(args):
 
     selected_features = selected_feature_result["selected_features"]
 
-    feature_selection_results_path = Path(args.feature_importance_dir) / "feature_selection_results.json"
+    feature_selection_results_path = (
+        Path(args.feature_importance_dir) / "feature_selection_results.json"
+    )
 
     with open(feature_selection_results_path, "w", encoding="utf-8") as file:
         json.dump(feature_selection_results, file, indent=4)
@@ -667,16 +687,20 @@ def train_with_mlflow(args):
         "selected_feature_count": len(selected_features),
         "selected_features": selected_features,
         "top_10_reference_features": top_10_payload["top_10_features"],
-        "feature_selection_validation_score": selected_feature_result["validation_score"],
+        "feature_selection_validation_score": selected_feature_result[
+            "validation_score"
+        ],
     }
 
-    selected_features_path = Path(args.feature_importance_dir) / "selected_features.json"
+    selected_features_path = (
+        Path(args.feature_importance_dir) / "selected_features.json"
+    )
 
     with open(selected_features_path, "w", encoding="utf-8") as file:
         json.dump(selected_features_payload, file, indent=4)
 
-    selected_preprocessor, selected_numeric_features, selected_categorical_features = build_preprocessor(
-        X_train[selected_features]
+    selected_preprocessor, selected_numeric_features, selected_categorical_features = (
+        build_preprocessor(X_train[selected_features])
     )
 
     selected_feature_pipeline = Pipeline(
@@ -715,8 +739,12 @@ def train_with_mlflow(args):
 
     selected_score = selected_test_metrics[primary_metric]
 
-    with mlflow.start_run(run_name=f"analysis_{best_all_feature_model_name}_selected_features"):
-        mlflow.log_param("model_name", f"{best_all_feature_model_name}_selected_features")
+    with mlflow.start_run(
+        run_name=f"analysis_{best_all_feature_model_name}_selected_features"
+    ):
+        mlflow.log_param(
+            "model_name", f"{best_all_feature_model_name}_selected_features"
+        )
         mlflow.log_param("model_stage", "selected_features_analysis")
         mlflow.log_param("reference_best_model_name", best_all_feature_model_name)
         mlflow.log_param("problem_type", problem_type)
@@ -724,10 +752,14 @@ def train_with_mlflow(args):
         mlflow.log_param("primary_metric", primary_metric)
         mlflow.log_param("feature_importance_method", "permutation_importance")
         mlflow.log_param("feature_selection_method", "validation_cutoff_selection")
-        mlflow.log_param("selected_candidate_name", selected_feature_result["candidate_name"])
+        mlflow.log_param(
+            "selected_candidate_name", selected_feature_result["candidate_name"]
+        )
         mlflow.log_param("selected_feature_count", len(selected_features))
         mlflow.log_param("selected_features", json.dumps(selected_features))
-        mlflow.log_param("top_10_reference_features", json.dumps(top_10_payload["top_10_features"]))
+        mlflow.log_param(
+            "top_10_reference_features", json.dumps(top_10_payload["top_10_features"])
+        )
         mlflow.log_param("quality_verdict", selected_diagnostics["verdict"])
         mlflow.log_param("leakage_status", leakage_report["status"])
         mlflow.log_param("feature_selection_used", "true")
@@ -760,7 +792,9 @@ def train_with_mlflow(args):
             "feature_importance_kept_as_analysis": True,
         }
 
-        selected_summary_path = Path(args.report_dir) / "selected_feature_model_summary.json"
+        selected_summary_path = (
+            Path(args.report_dir) / "selected_feature_model_summary.json"
+        )
 
         with open(selected_summary_path, "w", encoding="utf-8") as file:
             json.dump(selected_summary, file, indent=4)
@@ -782,7 +816,9 @@ def train_with_mlflow(args):
             artifact_path="model",
         )
 
-    selected_feature_model_path = Path(args.model_dir) / "best_selected_feature_model.pkl"
+    selected_feature_model_path = (
+        Path(args.model_dir) / "best_selected_feature_model.pkl"
+    )
     joblib.dump(selected_feature_pipeline, selected_feature_model_path)
 
     run_summaries.append(
@@ -801,9 +837,8 @@ def train_with_mlflow(args):
     )
 
     selected_is_better = (
-        (higher_is_better and selected_score > best_all_feature_score)
-        or ((not higher_is_better) and selected_score < best_all_feature_score)
-    )
+        higher_is_better and selected_score > best_all_feature_score
+    ) or ((not higher_is_better) and selected_score < best_all_feature_score)
 
     if selected_is_better:
         final_model_choice = "selected_features"
@@ -811,9 +846,7 @@ def train_with_mlflow(args):
         final_model = selected_feature_pipeline
         final_features = selected_features
         final_feature_selection_used = True
-        final_reason = (
-            "Selected-feature model outperformed the all-feature model on the primary metric."
-        )
+        final_reason = "Selected-feature model outperformed the all-feature model on the primary metric."
     else:
         final_model_choice = "all_features"
         final_model_name = f"{best_all_feature_model_name}_all_features"
@@ -860,16 +893,22 @@ def train_with_mlflow(args):
         mlflow.log_param("model_stage", "final_model")
         mlflow.log_param("final_model_choice", final_model_choice)
         mlflow.log_param("final_reason", final_reason)
-        mlflow.log_param("reference_best_all_feature_model_name", best_all_feature_model_name)
+        mlflow.log_param(
+            "reference_best_all_feature_model_name", best_all_feature_model_name
+        )
         mlflow.log_param("problem_type", problem_type)
         mlflow.log_param("target_column", args.target_column)
         mlflow.log_param("primary_metric", primary_metric)
         mlflow.log_param("all_features_score", float(best_all_feature_score))
         mlflow.log_param("selected_features_score", float(selected_score))
-        mlflow.log_param("feature_selection_used", str(final_feature_selection_used).lower())
+        mlflow.log_param(
+            "feature_selection_used", str(final_feature_selection_used).lower()
+        )
         mlflow.log_param("final_features", json.dumps(final_features))
         mlflow.log_param("selected_features_analysis", json.dumps(selected_features))
-        mlflow.log_param("top_10_reference_features", json.dumps(top_10_payload["top_10_features"]))
+        mlflow.log_param(
+            "top_10_reference_features", json.dumps(top_10_payload["top_10_features"])
+        )
         mlflow.log_param("quality_verdict", final_diagnostics["verdict"])
         mlflow.log_param("leakage_status", leakage_report["status"])
         mlflow.log_param("is_final_model", "true")
@@ -999,7 +1038,9 @@ def train_with_mlflow(args):
 
     print("\nModel quality diagnostics:")
     for item in diagnostic_summaries:
-        print(f"- {item['model_name']}: {item['verdict']} | {' | '.join(item['warnings'])}")
+        print(
+            f"- {item['model_name']}: {item['verdict']} | {' | '.join(item['warnings'])}"
+        )
 
     if leakage_report["warnings"]:
         print("\nData leakage warnings:")
@@ -1018,7 +1059,9 @@ def parse_args():
     parser.add_argument("--target-column", default="target")
     parser.add_argument("--model-dir", default="models")
     parser.add_argument("--report-dir", default="reports")
-    parser.add_argument("--feature-importance-dir", default="reports/feature_importance")
+    parser.add_argument(
+        "--feature-importance-dir", default="reports/feature_importance"
+    )
     parser.add_argument("--experiment-name", default="mlops_training_experiments")
     parser.add_argument("--backend-store-path", default="mlruns/mlflow.db")
     parser.add_argument("--random-state", type=int, default=42)

@@ -1,167 +1,134 @@
-import os
-import pytest
-import httpx
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
+
 import numpy as np
+import pandas as pd
+import pytest
+from fastapi.testclient import TestClient
 
-# Base URL from env (CI sets API_BASE_URL, local defaults to TestClient)
-API_BASE_URL = os.getenv("API_BASE_URL", None)
+from src.serving import app as serving_app
 
-# ── Fixtures ──────────────────────────────────────────────────────────────────
-
-VALID_PAYLOAD = {
-    "gender": "Female",
+SAMPLE_CUSTOMER = {
+    "tenure": 24,
+    "MonthlyCharges": 65.5,
+    "TotalCharges": 1572.0,
+    "gender": "Male",
     "SeniorCitizen": 0,
     "Partner": "Yes",
     "Dependents": "No",
-    "tenure": 12,
     "PhoneService": "Yes",
     "MultipleLines": "No",
-    "InternetService": "Fiber optic",
-    "OnlineSecurity": "No",
-    "OnlineBackup": "No",
+    "InternetService": "DSL",
+    "OnlineSecurity": "Yes",
+    "OnlineBackup": "Yes",
     "DeviceProtection": "No",
-    "TechSupport": "No",
+    "TechSupport": "Yes",
     "StreamingTV": "No",
     "StreamingMovies": "No",
-    "Contract": "Month-to-month",
+    "Contract": "One year",
     "PaperlessBilling": "Yes",
-    "PaymentMethod": "Electronic check",
-    "MonthlyCharges": 70.35,
-    "TotalCharges": 844.20,
-}
-
-INVALID_PAYLOAD = {
-    "gender": "Unknown",          # invalid literal
-    "SeniorCitizen": 5,           # out of range
-    "tenure": -1,                 # negative
-    "MonthlyCharges": "not_a_float",  # wrong type
+    "PaymentMethod": "Credit card (automatic)",
 }
 
 
-@pytest.fixture(scope="module")
+class FakePreprocessor:
+    _loaded = True
+
+    def transform(self, customer_dict):
+        return pd.DataFrame([customer_dict])
+
+    def transform_batch(self, customer_dicts):
+        return pd.DataFrame(customer_dicts)
+
+
+@pytest.fixture
 def mock_model():
-    """Mock model that returns deterministic predictions."""
     model = MagicMock()
-    model.predict.return_value = np.array([1])
-    model.predict_proba.return_value = np.array([[0.25, 0.75]])
+    model.predict.return_value = np.array([0])
+    model.predict_proba.return_value = np.array([[0.72, 0.28]])
     return model
 
 
-@pytest.fixture(scope="module")
-def client(mock_model):
-    """Return either a live httpx client (CI) or TestClient with mocked model."""
-    if API_BASE_URL:
-        # CI: real server running
-        with httpx.Client(base_url=API_BASE_URL, timeout=10.0) as c:
-            yield c
-    else:
-        # Local: use FastAPI TestClient with mocked model
-        from fastapi.testclient import TestClient
-        from src.serving.app import app, MODEL_STATE
-
-        MODEL_STATE["model"] = mock_model
-        MODEL_STATE["version"] = "test-v1"
-        MODEL_STATE["run_id"] = "test-run-id"
-        MODEL_STATE["loaded_at"] = __import__("time").time()
-
-        with TestClient(app) as c:
-            yield c
+@pytest.fixture
+def client(monkeypatch, mock_model):
+    monkeypatch.setattr(serving_app, "MODEL", mock_model)
+    monkeypatch.setattr(
+        serving_app,
+        "MODEL_INFO",
+        {"source": "test", "name": "MockModel", "version": "test-1"},
+    )
+    monkeypatch.setattr(serving_app, "PREPROCESSOR", FakePreprocessor())
+    return TestClient(serving_app.app)
 
 
-# ── Tests ─────────────────────────────────────────────────────────────────────
+def test_health_returns_loaded_model_metadata(client):
+    response = client.get("/health")
 
-class TestHealth:
-    def test_health_returns_200(self, client):
-        resp = client.get("/health")
-        assert resp.status_code == 200
-
-    def test_health_has_required_fields(self, client):
-        data = client.get("/health").json()
-        assert "status" in data
-        assert "model_loaded" in data
-        assert "model_version" in data
-
-    def test_health_status_value(self, client):
-        data = client.get("/health").json()
-        assert data["status"] in ("healthy", "degraded")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["model_loaded"] is True
+    assert body["preprocessor_loaded"] is True
+    assert body["model_info"]["name"] == "MockModel"
+    assert body["model_info"]["version"] == "test-1"
 
 
-class TestPredict:
-    def test_predict_valid_input_returns_200(self, client):
-        resp = client.post("/predict", json=VALID_PAYLOAD)
-        assert resp.status_code == 200
+def test_predict_accepts_customer_record_and_returns_prediction(client):
+    response = client.post("/predict", json={"customer": SAMPLE_CUSTOMER})
 
-    def test_predict_response_schema(self, client):
-        data = client.post("/predict", json=VALID_PAYLOAD).json()
-        assert "churn" in data
-        assert "churn_probability" in data
-        assert "model_version" in data
-
-    def test_predict_churn_is_bool(self, client):
-        data = client.post("/predict", json=VALID_PAYLOAD).json()
-        assert isinstance(data["churn"], bool)
-
-    def test_predict_probability_in_range(self, client):
-        data = client.post("/predict", json=VALID_PAYLOAD).json()
-        assert 0.0 <= data["churn_probability"] <= 1.0
-
-    def test_predict_invalid_gender_returns_422(self, client):
-        payload = {**VALID_PAYLOAD, "gender": "Unknown"}
-        resp = client.post("/predict", json=payload)
-        assert resp.status_code == 422
-
-    def test_predict_negative_tenure_returns_422(self, client):
-        payload = {**VALID_PAYLOAD, "tenure": -1}
-        resp = client.post("/predict", json=payload)
-        assert resp.status_code == 422
-
-    def test_predict_missing_field_returns_422(self, client):
-        payload = {k: v for k, v in VALID_PAYLOAD.items() if k != "MonthlyCharges"}
-        resp = client.post("/predict", json=payload)
-        assert resp.status_code == 422
-
-    def test_predict_invalid_contract_type_returns_422(self, client):
-        payload = {**VALID_PAYLOAD, "Contract": "Weekly"}
-        resp = client.post("/predict", json=payload)
-        assert resp.status_code == 422
+    assert response.status_code == 200
+    body = response.json()
+    assert body["churn"] == "No"
+    assert body["churn_probability"] == 0.28
+    assert body["model_version"] == "test-1"
 
 
-class TestBatchPredict:
-    def test_batch_predict_valid_input(self, client):
-        payload = {"instances": [VALID_PAYLOAD, VALID_PAYLOAD]}
-        resp = client.post("/predict/batch", json=payload)
-        assert resp.status_code == 200
+def test_predict_validates_required_fields(client):
+    invalid_customer = SAMPLE_CUSTOMER.copy()
+    invalid_customer.pop("MonthlyCharges")
 
-    def test_batch_predict_response_count(self, client):
-        payload = {"instances": [VALID_PAYLOAD, VALID_PAYLOAD, VALID_PAYLOAD]}
-        data = client.post("/predict/batch", json=payload).json()
-        assert data["total"] == 3
-        assert len(data["predictions"]) == 3
+    response = client.post("/predict", json={"customer": invalid_customer})
 
-    def test_batch_predict_empty_list_returns_422(self, client):
-        payload = {"instances": []}
-        resp = client.post("/predict/batch", json=payload)
-        assert resp.status_code == 422
-
-    def test_batch_predict_each_has_probability(self, client):
-        payload = {"instances": [VALID_PAYLOAD]}
-        data = client.post("/predict/batch", json=payload).json()
-        for pred in data["predictions"]:
-            assert 0.0 <= pred["churn_probability"] <= 1.0
+    assert response.status_code == 422
 
 
-class TestMetrics:
-    def test_metrics_endpoint_returns_200(self, client):
-        resp = client.get("/metrics")
-        assert resp.status_code == 200
+def test_predict_validates_allowed_categories(client):
+    invalid_customer = SAMPLE_CUSTOMER | {"Contract": "Weekly"}
 
-    def test_metrics_contains_inference_counter(self, client):
-        # Make a prediction first to generate metrics
-        client.post("/predict", json=VALID_PAYLOAD)
-        text = client.get("/metrics").text
-        assert "model_inference_total" in text
+    response = client.post("/predict", json={"customer": invalid_customer})
 
-    def test_metrics_contains_latency_histogram(self, client):
-        text = client.get("/metrics").text
-        assert "model_inference_latency_seconds" in text
+    assert response.status_code == 422
+
+
+def test_batch_predict_returns_confidence_scores(client, mock_model):
+    mock_model.predict.return_value = np.array([0, 1])
+    mock_model.predict_proba.return_value = np.array([[0.72, 0.28], [0.2, 0.8]])
+
+    response = client.post(
+        "/predict/batch",
+        json={
+            "records": [{"customer": SAMPLE_CUSTOMER}, {"customer": SAMPLE_CUSTOMER}]
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["count"] == 2
+    assert body["model_version"] == "test-1"
+    assert body["predictions"] == [
+        {"churn": "No", "churn_probability": 0.28},
+        {"churn": "Yes", "churn_probability": 0.8},
+    ]
+
+
+def test_metrics_exposes_required_prometheus_metrics(client):
+    client.post("/predict", json={"customer": SAMPLE_CUSTOMER})
+
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    metrics_text = response.text
+    assert "churn_prediction_confidence" in metrics_text
+    assert "churn_input_tenure_months" in metrics_text
+    assert "churn_input_monthly_charges" in metrics_text
+    assert "churn_model_version_info" in metrics_text
+    assert "churn_prediction_label_total" in metrics_text

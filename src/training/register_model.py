@@ -44,11 +44,7 @@ def find_best_run(experiment_name, metric_name, higher_is_better=True):
 
     if not valid_runs:
         available_metrics = sorted(
-            {
-                metric
-                for run in runs
-                for metric in run.data.metrics.keys()
-            }
+            {metric for run in runs for metric in run.data.metrics.keys()}
         )
 
         raise ValueError(
@@ -65,15 +61,11 @@ def find_best_run(experiment_name, metric_name, higher_is_better=True):
     best_metric_value = valid_runs[0].data.metrics[metric_name]
 
     tied_best_runs = [
-        run
-        for run in valid_runs
-        if run.data.metrics[metric_name] == best_metric_value
+        run for run in valid_runs if run.data.metrics[metric_name] == best_metric_value
     ]
 
     final_model_runs = [
-        run
-        for run in tied_best_runs
-        if run.data.params.get("is_final_model") == "true"
+        run for run in tied_best_runs if run.data.params.get("is_final_model") == "true"
     ]
 
     if final_model_runs:
@@ -129,7 +121,9 @@ def register_and_promote_model(args):
     best_model_summary = load_json_if_exists(args.best_model_summary_path)
 
     selected_features = selected_features_payload.get("selected_features", [])
-    top_10_reference_features = selected_features_payload.get("top_10_reference_features", [])
+    top_10_reference_features = selected_features_payload.get(
+        "top_10_reference_features", []
+    )
 
     final_model_choice = best_model_summary.get(
         "final_model_choice",
@@ -150,8 +144,12 @@ def register_and_promote_model(args):
         "registered_metric_name": args.metric_name,
         "registered_metric_value": str(best_metric_value),
         "registered_run_id": run_id,
-        "registered_model_name_from_run": best_run.data.params.get("model_name", "unknown"),
-        "registered_model_stage_from_run": best_run.data.params.get("model_stage", "unknown"),
+        "registered_model_name_from_run": best_run.data.params.get(
+            "model_name", "unknown"
+        ),
+        "registered_model_stage_from_run": best_run.data.params.get(
+            "model_stage", "unknown"
+        ),
         "final_model_choice": str(final_model_choice),
         "final_reason": str(final_reason),
         "feature_importance_kept_as_analysis": str(feature_importance_kept_as_analysis),
@@ -234,8 +232,13 @@ def parse_args():
     parser.add_argument("--registered-model-name", default="BestMLOpsModel")
     parser.add_argument("--metric-name", default="f1_macro")
     parser.add_argument("--higher-is-better", action="store_true")
-    parser.add_argument("--selected-features-path", default="reports/feature_importance/selected_features.json")
-    parser.add_argument("--best-model-summary-path", default="reports/best_model_summary.json")
+    parser.add_argument(
+        "--selected-features-path",
+        default="reports/feature_importance/selected_features.json",
+    )
+    parser.add_argument(
+        "--best-model-summary-path", default="reports/best_model_summary.json"
+    )
 
     return parser.parse_args()
 
