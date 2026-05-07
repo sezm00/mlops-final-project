@@ -84,10 +84,12 @@ stages:
     cmd: python src/training/register_model.py --experiment-name mlops_training_experiments
       --registered-model-name BestMLOpsModel --metric-name f1_macro --higher-is-better
       --selected-features-path reports/feature_importance/selected_features.json --best-model-summary-path
-      reports/best_model_summary.json
+      reports/best_model_summary.json --registry-summary-path reports/model_registry_summary.json
     deps:
     - src/training/register_model.py
     - src/training/mlflow_setup.py
     - reports/feature_importance/selected_features.json
     - reports/best_model_summary.json
+    outs:
+    - reports/model_registry_summary.json
     always_changed: true
