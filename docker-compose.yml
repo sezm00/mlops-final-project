@@ -1,0 +1,102 @@
+version: "3.9"
+
+services:
+
+  # ── MLflow Tracking Server (provided by Member 1) ──────────────────────────
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.11.3
+    container_name: mlops-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - mlops-net
+
+  # ── Churn Prediction API ───────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: mlops-api
+    ports:
+      - "8000:8000"
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_MODEL_NAME: churn-model
+      MLFLOW_MODEL_STAGE: Production
+      MLFLOW_MODEL_PATH: /app/model.pkl
+    volumes:
+      - ./model.pkl:/app/model.pkl:ro          # fallback local model
+      - ./monitoring:/app/monitoring            # drift reports written here
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - mlops-net
+    restart: unless-stopped
+
+  # ── Prometheus ─────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: mlops-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    depends_on:
+      - api
+    networks:
+      - mlops-net
+    restart: unless-stopped
+
+  # ── Grafana (optional — for dashboards) ────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: mlops-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - mlops-net
+    restart: unless-stopped
+
+volumes:
+  mlflow_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  mlops-net:
+    driver: bridge

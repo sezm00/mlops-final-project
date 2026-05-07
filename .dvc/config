@@ -1,4 +1,4 @@
 [core]
     remote = myremote
 ['remote "myremote"']
-    url = ../../dvc-remote
+    url = E:\University\Year_3\Semester_2\MLOPS\dvc-remote\files

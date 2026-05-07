@@ -246,6 +246,7 @@ models/
 
 # MLflow
 mlruns/
+reports/
 
 # Logs & temp files
 logs/

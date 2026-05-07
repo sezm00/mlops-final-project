@@ -34,6 +34,10 @@ rich==15.0.0
 rich-click==1.9.7
 typer==0.25.0
 tabulate==0.10.0
+ruff==0.11.9
+black==25.1.0
+isort==6.0.1
+pytest-timeout==2.4.0
 
 # =========================================
 # FULL ORIGINAL DEPENDENCIES (UNCHANGED)
@@ -95,7 +99,7 @@ networkx==3.6.1
 nltk==3.9.4
 opentelemetry-proto==1.41.1
 orjson==3.11.8
-packaging==26.2
+packaging==24.2
 pandera==0.31.1
 pathspec==1.1.1
 patsy==1.0.2
@@ -104,7 +108,7 @@ pluggy==1.6.0
 polyfactory==3.3.0
 prompt_toolkit==3.0.52
 propcache==0.4.1
-protobuf==6.33.6
+protobuf==5.29.6
 psutil==7.2.2
 pycparser==3.0
 pydot==4.0.1
@@ -113,7 +117,6 @@ Pygments==2.20.0
 pygtrie==2.5.0
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
-#pywin32==311
 regex==2026.4.4
 ruamel.yaml==0.19.1
 semver==3.0.4
