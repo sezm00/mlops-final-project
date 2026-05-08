@@ -171,7 +171,7 @@ jobs:
 
 
 # ---------------------------------------------------
-# 5. MONITORING (optional but safe)
+# 5. MONITORING
 # ---------------------------------------------------
   monitoring:
     name: Monitoring
@@ -186,11 +186,12 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
-      - name: Install dependencies + DVC
+      - name: Install dependencies + DVC + Evidently
         run: |
           python -m pip install --upgrade pip
           pip install --prefer-binary -r requirements.txt
           pip install "dvc[all]"
+          pip install evidently
 
       - name: Pull DVC data
         run: dvc pull
