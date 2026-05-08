@@ -2,7 +2,7 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [**]
+    branches: ["**"]
   pull_request:
     branches: [develop]
 
@@ -14,6 +14,7 @@ jobs:
   lint:
     name: "1. Lint"
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,15 +24,21 @@ jobs:
           cache: pip
 
       - name: Install lint dependencies
-        run: pip install -r requirements-dev.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
 
-      - name: Ruff
+      - name: Ruff lint
         run: ruff check src tests monitoring
+
+      - name: Ruff format check
+        run: ruff format --check .
 
   tests:
     name: "2. Unit and Integration Tests"
     runs-on: ubuntu-latest
     needs: lint
+
     steps:
       - uses: actions/checkout@v4
 
@@ -42,13 +49,14 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
       - name: Run pytest with coverage gate
         run: |
           pytest tests \
-            --cov=src \
+            --cov=src/serving \
             --cov-report=xml \
             --cov-report=term-missing \
             --cov-fail-under=70 \
@@ -64,6 +72,7 @@ jobs:
     name: "3. Data Validation"
     runs-on: ubuntu-latest
     needs: tests
+
     steps:
       - uses: actions/checkout@v4
 
@@ -74,20 +83,37 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+
+      - name: Cache DVC artifacts
+        uses: actions/cache@v4
+        with:
+          path: .dvc/cache
+          key: dvc-${{ runner.os }}-${{ hashFiles('dvc.lock') }}
 
       - name: Pull DVC artifacts
         run: dvc pull
 
       - name: Run Great Expectations validation
         run: |
-          python -c "import pandas as pd; from src.data.great_expectations_suite import validate_reference_data; validate_reference_data(pd.read_csv('data/processed/featurized_reference.csv')); print('Data validation passed')"
+          python -c "
+          import pandas as pd;
+          from src.data.great_expectations_suite import validate_reference_data;
+
+          validate_reference_data(
+              pd.read_csv('data/processed/featurized_reference.csv')
+          );
+
+          print('Data validation passed')
+          "
 
   model-validation:
     name: "4. Model Validation"
     runs-on: ubuntu-latest
     needs: data-validation
+
     steps:
       - uses: actions/checkout@v4
 
@@ -98,20 +124,54 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+
+      - name: Cache DVC artifacts
+        uses: actions/cache@v4
+        with:
+          path: .dvc/cache
+          key: dvc-${{ runner.os }}-${{ hashFiles('dvc.lock') }}
 
       - name: Pull DVC artifacts
         run: dvc pull
 
       - name: Validate registered/local model quality
         run: |
-          python -c "import json, os, joblib; from pathlib import Path; model_path=Path('models/best_model.pkl'); metrics_path=Path('reports/metrics.json'); assert model_path.exists(), 'models/best_model.pkl is missing'; model=joblib.load(model_path); assert hasattr(model, 'predict'), 'model must implement predict'; metrics=json.loads(metrics_path.read_text()); f1=float(metrics.get('f1_macro', 0)); threshold=float(os.environ['MIN_F1_MACRO']); assert f1 >= threshold, f'f1_macro {f1:.3f} is below threshold {threshold:.3f}'; print(f'Model validation passed: f1_macro={f1:.3f}')"
+          python -c "
+          import json;
+          import os;
+          import joblib;
+
+          from pathlib import Path;
+
+          model_path = Path('models/best_model.pkl')
+          metrics_path = Path('reports/metrics.json')
+
+          assert model_path.exists(), 'models/best_model.pkl is missing'
+
+          model = joblib.load(model_path)
+
+          assert hasattr(model, 'predict'), 'model must implement predict'
+
+          metrics = json.loads(metrics_path.read_text())
+
+          f1 = float(metrics.get('f1_macro', 0))
+          threshold = float(os.environ['MIN_F1_MACRO'])
+
+          assert f1 >= threshold, (
+              f'f1_macro {f1:.3f} is below threshold {threshold:.3f}'
+          )
+
+          print(f'Model validation passed: f1_macro={f1:.3f}')
+          "
 
   monitoring:
     name: "5. Monitoring and Drift Detection"
     runs-on: ubuntu-latest
     needs: model-validation
+
     steps:
       - uses: actions/checkout@v4
 
@@ -122,8 +182,15 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+
+      - name: Cache DVC artifacts
+        uses: actions/cache@v4
+        with:
+          path: .dvc/cache
+          key: dvc-${{ runner.os }}-${{ hashFiles('dvc.lock') }}
 
       - name: Pull DVC artifacts
         run: dvc pull
@@ -141,13 +208,39 @@ jobs:
     name: "6. Docker Build"
     runs-on: ubuntu-latest
     needs: monitoring
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Pull DVC artifacts for Docker context
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install DVC
         run: |
-          pipx install dvc
-          dvc pull
+          python -m pip install --upgrade pip
+          pip install dvc
+
+      - name: Cache DVC artifacts
+        uses: actions/cache@v4
+        with:
+          path: .dvc/cache
+          key: dvc-${{ runner.os }}-${{ hashFiles('dvc.lock') }}
+
+      - name: Pull DVC artifacts for Docker context
+        run: dvc pull
 
       - name: Build serving image
-        run: docker build -t churn-api:${{ github.sha }} .
+        run: |
+          docker build --pull -t churn-api:${{ github.sha }} .
+
+      - name: Run container
+        run: |
+          docker run -d -p 8000:8000 --name churn-api churn-api:${{ github.sha }}
+
+      - name: Wait for API startup
+        run: sleep 15
+
+      - name: API healthcheck
+        run: curl --fail http://localhost:8000/health

@@ -132,3 +132,8 @@ def test_metrics_exposes_required_prometheus_metrics(client):
     assert "churn_input_monthly_charges" in metrics_text
     assert "churn_model_version_info" in metrics_text
     assert "churn_prediction_label_total" in metrics_text
+
+def test_predict_rejects_invalid_payload(client):
+    response = client.post("/predict", json={})
+
+    assert response.status_code in [400, 422]
