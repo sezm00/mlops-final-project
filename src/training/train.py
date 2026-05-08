@@ -11,18 +11,14 @@ import joblib
 import mlflow
 import mlflow.sklearn
 import pandas as pd
-from sklearn.base import clone
+
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import (
     GradientBoostingClassifier,
-    GradientBoostingRegressor,
     RandomForestClassifier,
-    RandomForestRegressor,
 )
 from sklearn.impute import SimpleImputer
-from sklearn.inspection import permutation_importance
-from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.svm import SVC
@@ -90,21 +86,21 @@ def build_preprocessor(X_train):
     ).columns.tolist()
 
     numeric_pipeline = Pipeline(
-        [
+        steps=[
             ("imputer", SimpleImputer(strategy="median")),
             ("scaler", StandardScaler()),
         ]
     )
 
     categorical_pipeline = Pipeline(
-        [
+        steps=[
             ("imputer", SimpleImputer(strategy="most_frequent")),
             ("encoder", make_one_hot_encoder()),
         ]
     )
 
     preprocessor = ColumnTransformer(
-        [
+        transformers=[
             ("num", numeric_pipeline, numeric_features),
             ("cat", categorical_pipeline, categorical_features),
         ]
@@ -131,12 +127,17 @@ def train_with_mlflow(args):
 
     problem_type = detect_problem_type(y_train)
 
+    # =========================
+    # DATA LEAKAGE (FIXED: now used)
+    # =========================
     leakage_report = check_data_leakage(
         train_df=train_df,
         test_df=test_df,
         target_column=args.target_column,
         output_dir=args.report_dir,
     )
+
+    print(f"[LEAKAGE STATUS]: {leakage_report['status']}")
 
     models = {
         "log_reg": LogisticRegression(max_iter=1000),
@@ -152,10 +153,10 @@ def train_with_mlflow(args):
     diagnostics_all = []
 
     for name, estimator in models.items():
-        preprocessor, num, cat = build_preprocessor(X_train)
+        preprocessor, _, _ = build_preprocessor(X_train)
 
         pipeline = Pipeline(
-            [
+            steps=[
                 ("preprocessor", preprocessor),
                 ("model", estimator),
             ]
@@ -164,8 +165,12 @@ def train_with_mlflow(args):
         with mlflow.start_run(run_name=name):
             pipeline.fit(X_train, y_train)
 
-            train_metrics = evaluate_model(pipeline, X_train, y_train, args.report_dir)
-            test_metrics = evaluate_model(pipeline, X_test, y_test, args.report_dir)
+            train_metrics = evaluate_model(
+                pipeline, X_train, y_train, args.report_dir
+            )
+            test_metrics = evaluate_model(
+                pipeline, X_test, y_test, args.report_dir
+            )
 
             diagnostics = evaluate_overfit_underfit(
                 model_name=name,
@@ -181,6 +186,7 @@ def train_with_mlflow(args):
             score = test_metrics.get("f1_macro", 0)
 
             mlflow.log_metric("f1_macro", score)
+            mlflow.log_param("leakage_status", leakage_report["status"])
 
             mlflow.sklearn.log_model(pipeline, "model")
 
@@ -205,8 +211,6 @@ def train_with_mlflow(args):
     # =========================
     # Save reports
     # =========================
-    Path(args.report_dir).mkdir(exist_ok=True)
-
     pd.DataFrame(run_summaries).to_csv(
         Path(args.report_dir) / "run_summary.csv", index=False
     )
