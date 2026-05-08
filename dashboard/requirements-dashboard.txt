@@ -8,3 +8,7 @@ scikit-learn
 xgboost
 lightgbm
 catboost
+
+dvc
+dvc-s3
+evidently
