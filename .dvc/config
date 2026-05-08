@@ -1,9 +1,6 @@
 [core]
     remote = s3remote
-['remote "storage"']
-    url = s3://mlops-dvc-storage-islam/dvc
-['remote "r2remote"']
-    url = s3://mlops-dvc-storage-islam
+    
 ['remote "s3remote"']
     url = s3://mlops-dvc-storage-islam
     access_key_id = AKIA4ANXJ45IWNH2YROG
