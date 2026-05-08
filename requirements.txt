@@ -39,6 +39,7 @@ prometheus_client==0.25.0
 # DATA PROCESSING
 # =========================================
 pyarrow==18.1.0
+great-expectations==0.18.19
 
 # =========================================
 # UTILITIES
