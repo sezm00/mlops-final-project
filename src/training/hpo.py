@@ -18,7 +18,8 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from src.evaluation.diagnostics import evaluate_overfit_underfit, save_model_diagnostics_report
+from src.evaluation.diagnostics import (evaluate_overfit_underfit,
+                                        save_model_diagnostics_report)
 from src.evaluation.evaluate import detect_problem_type, evaluate_model
 from src.training.mlflow_setup import configure_mlflow
 
@@ -31,7 +32,9 @@ def optional_import(module_name, class_name):
         module = importlib.import_module(module_name)
         return getattr(module, class_name)
     except Exception as error:
-        print(f"Optional HPO model skipped: {class_name} from {module_name}. Reason: {error}")
+        print(
+            f"Optional HPO model skipped: {class_name} from {module_name}. Reason: {error}"
+        )
         return None
 
 
@@ -53,7 +56,9 @@ def load_split_data(train_path, test_path, target_column):
     test_df = pd.read_csv(test_path)
 
     if target_column not in train_df.columns:
-        raise ValueError(f"Target column '{target_column}' was not found in train data.")
+        raise ValueError(
+            f"Target column '{target_column}' was not found in train data."
+        )
 
     if target_column not in test_df.columns:
         raise ValueError(f"Target column '{target_column}' was not found in test data.")

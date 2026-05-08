@@ -1,7 +1,8 @@
 import os
-import yaml
-import pandas as pd
+
 import joblib
+import pandas as pd
+import yaml
 
 from src.features.feature_engineer import FeatureEngineer
 
@@ -54,7 +55,7 @@ def run_featurisation():
             "params": params,
             "stats": engine.stats_,
         },
-        artifact_path
+        artifact_path,
     )
 
     print(f"[featurize] saved data → {out_path}")

@@ -156,6 +156,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+*_env/
 
 # Spyder project settings
 .spyderproject
@@ -245,6 +246,7 @@ models/
 
 # MLflow
 mlruns/
+reports/
 
 # Logs & temp files
 logs/
@@ -258,6 +260,11 @@ temp/
 
 # Monitoring
 monitoring/evidently_reports/
+!monitoring/evidently_reports/
+!monitoring/evidently_reports/.gitkeep
+!monitoring/evidently_reports/*.html
+!monitoring/evidently_reports/*.json
+!monitoring/evidently_reports/*.log
 
 # Databases
 *.db

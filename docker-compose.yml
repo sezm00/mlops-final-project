@@ -1,0 +1,79 @@
+services:
+  churn-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: churn-api
+    ports:
+      - "8000:8000"
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5001
+      MLFLOW_MODEL_NAME: BestMLOpsModel
+      PYTHONPATH: /app
+    volumes:
+      - ./models:/app/models:ro
+      - ./reports:/app/reports:ro
+      - ./configs:/app/configs:ro
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  mlflow:
+    image: python:3.11.9-slim
+    container_name: mlflow-server
+    command: >
+      bash -c "pip install mlflow==2.19.0 sqlalchemy --quiet &&
+               mlflow server
+               --backend-store-uri sqlite:///mlruns/mlflow.db
+               --default-artifact-root /mlruns/artifacts
+               --host 0.0.0.0
+               --port 5001"
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./mlruns:/mlruns
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5001/health')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    depends_on:
+      - churn-api
+    restart: unless-stopped
+
+volumes:
+  mlruns:

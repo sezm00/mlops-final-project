@@ -11,17 +11,18 @@ stages:
       size: 15806
     - path: data/splits/train.csv
       hash: md5
-      md5: de4b8920f56dec56311612f1947fedd0
-      size: 62998
-    - path: src/evaluation/diagnostics.py
+      md5: 3dc50b8f8b408af2eba2fcd9825f5abb
+      size: 5009
+    - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
       hash: md5
       md5: 2b8672b70c3e56c77106b159e43c89cc
       size: 8198
     - path: src/evaluation/evaluate.py
       hash: md5
-      md5: 0ffba28fae106220da2cd02d4a0e6474
-      size: 3274
-    - path: src/training/mlflow_setup.py
+      md5: a324ade431361b1351e82ffc1c24c8fa
+      size: 10625
+    outs:
+    - path: data/processed/cleaned_reference.csv
       hash: md5
       md5: 3b1f5b1d6cc258cf2653633f9a616380
       size: 743
@@ -101,48 +102,31 @@ stages:
     deps:
     - path: data/splits/test.csv
       hash: md5
-      md5: 064879f4a3855ddd65ad7098229875a7
-      size: 15806
-    - path: data/splits/train.csv
+      md5: 3dc50b8f8b408af2eba2fcd9825f5abb
+      size: 5009
+    - path: data/processed/cleaned_reference.csv
       hash: md5
       md5: de4b8920f56dec56311612f1947fedd0
       size: 62998
     - path: src/evaluation/diagnostics.py
       hash: md5
-      md5: 2b8672b70c3e56c77106b159e43c89cc
-      size: 8198
-    - path: src/evaluation/evaluate.py
+      md5: 96f07273de7b16edbdedc110f97d402a
+      size: 1836
+    - path: src/features/featurize.py
       hash: md5
-      md5: 0ffba28fae106220da2cd02d4a0e6474
-      size: 3274
-    - path: src/training/hpo.py
+      md5: 81727cdfe1076e5f3bed1ff0bd19d4be
+      size: 1682
+    outs:
+    - path: data/processed/featurized_reference.csv
       hash: md5
       md5: 3e34ef525d89f1a346d1c03872d6eb35
       size: 15263
     - path: src/training/mlflow_setup.py
       hash: md5
-      md5: 3b1f5b1d6cc258cf2653633f9a616380
-      size: 743
-    outs:
-    - path: models/best_tuned_model.pkl
-      hash: md5
-      md5: c13744c31b33f16e9e7390d4c13ad8d7
-      size: 324674
-    - path: reports/hpo_diagnostics_report.json
-      hash: md5
-      md5: c45fc7fafe8dfebd2d1712bc0349543f
-      size: 1311
-    - path: reports/hpo_summary.json
-      hash: md5
-      md5: 375e2967cda6330db4eb66dea5c6f425
-      size: 8056
-  register:
-    cmd: python src/training/register_model.py --experiment-name 
-      mlops_training_experiments --registered-model-name BestMLOpsModel 
-      --metric-name f1_macro --higher-is-better --selected-features-path 
-      reports/feature_importance/selected_features.json 
-      --best-model-summary-path reports/best_model_summary.json 
-      --registry-summary-path reports/model_registry_summary.json
+      md5: 908187aa602f5941923bed04f07be949
+      size: 1966
+  validate_schema:
+    cmd: python src/features/validate_schema.py
     deps:
     - path: reports/best_model_summary.json
       hash: md5
@@ -158,10 +142,223 @@ stages:
       size: 743
     - path: src/training/register_model.py
       hash: md5
-      md5: ba557c7c7c0a60af2cf59487fb0b887d
-      size: 9860
+      md5: d05b45e38c001045fb460d8218457228
+      size: 23
+  preprocess:
+    cmd: python src/data/preprocess.py
+    deps:
+    - path: configs/params.yaml
+      hash: md5
+      md5: 3dc50b8f8b408af2eba2fcd9825f5abb
+      size: 5009
+    - path: data/processed/featurized_reference.csv
+      hash: md5
+      md5: 65b866c473672988eae5c3a349356271
+      size: 797080
+    - path: src/data/preprocess.py
+      hash: md5
+      md5: f1634be6087296fc15fb52d2402f909c
+      size: 8420
+    params:
+      configs/params.yaml:
+        encoding:
+          binary_columns:
+          - gender
+          - Partner
+          - Dependents
+          - PhoneService
+          - PaperlessBilling
+          - SeniorCitizen
+          ohe_columns:
+          - MultipleLines
+          - InternetService
+          - OnlineSecurity
+          - OnlineBackup
+          - DeviceProtection
+          - TechSupport
+          - StreamingTV
+          - StreamingMovies
+          - Contract
+          - PaymentMethod
+        preprocessing:
+          scaler: standard
+          numeric_features:
+          - tenure
+          - MonthlyCharges
+          - TotalCharges
+          - AvgMonthlyCharges
+          - ChargeDeviation
+          - TotalCharges_log
+          - NumServices
+          - IsHighValueCustomer
+          imputer_strategy: median
+          use_smote: true
+          smote_k_neighbors: 5
+        split.random_state: 42
+        split.test_size: 0.2
+        stat_features:
+          high_value_quantile: 0.75
     outs:
     - path: reports/model_registry_summary.json
       hash: md5
-      md5: 372a8326e188c076ed3060a018ce5cd1
-      size: 1013
+      md5: d606607535083f1cd19e77328fdec615
+      size: 10973
+  train:
+    cmd: python -m src.training.train --train-path data/splits/train.csv 
+      --test-path data/splits/test.csv --target-column Churn --model-dir models 
+      --report-dir reports
+    deps:
+    - path: data/splits/test.csv
+      hash: md5
+      md5: 0008fec9bffba059638baf2c14c82aac
+      size: 236755
+    - path: data/splits/train.csv
+      hash: md5
+      md5: e55b73949a795079c43015141559aa6d
+      size: 1395567
+    - path: src/evaluation/diagnostics.py
+      hash: md5
+      md5: 105f57a1d9596023c78bacf336e7df37
+      size: 8670
+    - path: src/evaluation/evaluate.py
+      hash: md5
+      md5: a60aa1e95127b202c9822c599e1a0b57
+      size: 3454
+    - path: src/training/mlflow_setup.py
+      hash: md5
+      md5: 92509e268fdfdd0089334b813cd3fd5b
+      size: 803
+    - path: src/training/train.py
+      hash: md5
+      md5: 064caa1e8101ea979379a5ebed332fbb
+      size: 39445
+    outs:
+    - path: models/best_all_features_model.pkl
+      hash: md5
+      md5: 8c1d52aaa2a89ca98c7baca44aa3d5c5
+      size: 658870
+    - path: models/best_model.pkl
+      hash: md5
+      md5: 8c1d52aaa2a89ca98c7baca44aa3d5c5
+      size: 658870
+    - path: models/best_reference_model.pkl
+      hash: md5
+      md5: 8c1d52aaa2a89ca98c7baca44aa3d5c5
+      size: 658870
+    - path: models/best_selected_feature_model.pkl
+      hash: md5
+      md5: ce53bc0cb590e3a6ce2989a131798e06
+      size: 492742
+    - path: models/feature_columns.json
+      hash: md5
+      md5: aed84a7f44a54f2ce12828c1d5445a67
+      size: 3619
+    - path: reports/best_model_summary.json
+      hash: md5
+      md5: edadbc0050f23ee4ab6ea1000f8f448e
+      size: 3838
+    - path: reports/data_leakage_report.json
+      hash: md5
+      md5: a2f7bec4d8adec575e19bd0cb41fa997
+      size: 347
+    - path: reports/feature_importance/all_feature_importance.csv
+      hash: md5
+      md5: 2511eb64602937953eec691057f9ddd1
+      size: 3349
+    - path: reports/feature_importance/feature_selection_results.json
+      hash: md5
+      md5: 50212698cc33937d2e8991cfed959b5f
+      size: 6555
+    - path: reports/feature_importance/selected_features.json
+      hash: md5
+      md5: 6b7d4c77c6ce68456e6326c46a077820
+      size: 1425
+    - path: reports/feature_importance/top_10_feature_importance.csv
+      hash: md5
+      md5: 28ecf48cb0ad4db478a3dbb48b64dc0c
+      size: 1351
+    - path: reports/feature_importance/top_10_features.json
+      hash: md5
+      md5: 643139af58f6a04c0b4df79e7ca59f24
+      size: 451
+    - path: reports/metrics.json
+      hash: md5
+      md5: 44bc4d2b79cf487845260637690bd5f2
+      size: 237
+    - path: reports/mlflow_run_summary.csv
+      hash: md5
+      md5: d84291d75d30167ea4a9690a9277d8be
+      size: 2768
+    - path: reports/model_diagnostics_report.json
+      hash: md5
+      md5: 5e5dd57f09e5ce62c350ae47299b110c
+      size: 1994
+    - path: reports/selected_feature_model_summary.json
+      hash: md5
+      md5: 3b79a8ddbe9b83ab98998071792bc755
+      size: 2115
+  hpo:
+    cmd: python src/training/hpo.py --train-path data/splits/train.csv 
+      --test-path data/splits/test.csv --target-column Churn --model-dir models 
+      --report-dir reports --n-iter 6 --cv 3
+    deps:
+    - path: data/splits/test.csv
+      hash: md5
+      md5: 0008fec9bffba059638baf2c14c82aac
+      size: 236755
+    - path: data/splits/train.csv
+      hash: md5
+      md5: e55b73949a795079c43015141559aa6d
+      size: 1395567
+    - path: src/evaluation/diagnostics.py
+      hash: md5
+      md5: 443e7b34d68a2ee1499bb8fef64d27c3
+      size: 8469
+    - path: src/evaluation/evaluate.py
+      hash: md5
+      md5: 56b5666cfc8106bfbc323314e6c252e2
+      size: 3394
+    - path: src/training/hpo.py
+      hash: md5
+      md5: 786d58c20b66223852dc3d1198f3447e
+      size: 15703
+    - path: src/training/mlflow_setup.py
+      hash: md5
+      md5: 16c1c60cc3b27c8e33ac25806ea50424
+      size: 799
+    outs:
+    - path: models/best_tuned_model.pkl
+      hash: md5
+      md5: aa5f5b7aa331f6194ddbcf61de0b7c5d
+      size: 30800219
+    - path: reports/hpo_diagnostics_report.json
+      hash: md5
+      md5: 925c38f743c964e8db45843b5b773f15
+      size: 395
+    - path: reports/hpo_summary.json
+      hash: md5
+      md5: 4edce737e80a5b3edaf37b7dc17caa2c
+      size: 3717
+  register:
+    cmd: python src/training/register_model.py --experiment-name 
+      mlops_training_experiments --registered-model-name BestMLOpsModel 
+      --metric-name f1_macro --higher-is-better --selected-features-path 
+      reports/feature_importance/selected_features.json 
+      --best-model-summary-path reports/best_model_summary.json
+    deps:
+    - path: reports/best_model_summary.json
+      hash: md5
+      md5: 7fc8450bd6b7f802dced3d01bcc3bba7
+      size: 3838
+    - path: reports/feature_importance/selected_features.json
+      hash: md5
+      md5: 6b7d4c77c6ce68456e6326c46a077820
+      size: 1425
+    - path: src/training/mlflow_setup.py
+      hash: md5
+      md5: 16c1c60cc3b27c8e33ac25806ea50424
+      size: 799
+    - path: src/training/register_model.py
+      hash: md5
+      md5: 5a9ca5ea0d20fdddb7ff66399f58f3d6
+      size: 7815

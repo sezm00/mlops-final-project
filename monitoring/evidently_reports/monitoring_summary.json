@@ -1,0 +1,116 @@
+{
+  "threshold": 0.2,
+  "baseline": {
+    "drift_detected": true,
+    "drift_share": 0.3684,
+    "threshold": 0.2,
+    "drifted_feature_count": 7,
+    "total_feature_count": 19,
+    "drifted_features": [
+      {
+        "feature": "DeviceProtection",
+        "score": 0.28694335748007255,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "MultipleLines",
+        "score": 0.20028195158669795,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "OnlineBackup",
+        "score": 0.28861610392766335,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "OnlineSecurity",
+        "score": 0.28670008780932976,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "StreamingMovies",
+        "score": 0.2889075580674639,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "StreamingTV",
+        "score": 0.29084788929416766,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "TechSupport",
+        "score": 0.2889067542399112,
+        "test": "Jensen-Shannon distance"
+      }
+    ]
+  },
+  "drift": {
+    "drift_detected": true,
+    "drift_share": 0.6316,
+    "threshold": 0.2,
+    "drifted_feature_count": 12,
+    "total_feature_count": 19,
+    "drifted_features": [
+      {
+        "feature": "MonthlyCharges",
+        "score": 1.4030376063693466,
+        "test": "Wasserstein distance (normed)"
+      },
+      {
+        "feature": "TotalCharges",
+        "score": 0.2548765828984542,
+        "test": "Wasserstein distance (normed)"
+      },
+      {
+        "feature": "tenure",
+        "score": 0.7199965271524121,
+        "test": "Wasserstein distance (normed)"
+      },
+      {
+        "feature": "Contract",
+        "score": 0.43297642000086434,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "DeviceProtection",
+        "score": 0.28694335748007255,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "InternetService",
+        "score": 0.3550139225804789,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "MultipleLines",
+        "score": 0.20028195158669795,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "OnlineBackup",
+        "score": 0.28861610392766335,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "OnlineSecurity",
+        "score": 0.28670008780932976,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "StreamingMovies",
+        "score": 0.2889075580674639,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "StreamingTV",
+        "score": 0.29084788929416766,
+        "test": "Jensen-Shannon distance"
+      },
+      {
+        "feature": "TechSupport",
+        "score": 0.2889067542399112,
+        "test": "Jensen-Shannon distance"
+      }
+    ]
+  }
+}

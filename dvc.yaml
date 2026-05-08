@@ -36,9 +36,7 @@ stages:
     - data/splits/test.csv
     - models/preprocessing_pipeline.joblib
   train:
-    cmd: python src/training/train.py --train-path data/splits/train.csv --test-path
-      data/splits/test.csv --target-column target --model-dir models --report-dir
-      reports
+    cmd: python -m src.training.train --train-path data/splits/train.csv --test-path data/splits/test.csv --target-column Churn --model-dir models --report-dir reports
     deps:
     - src/training/train.py
     - src/training/mlflow_setup.py
@@ -67,7 +65,7 @@ stages:
         cache: false
   hpo:
     cmd: python src/training/hpo.py --train-path data/splits/train.csv --test-path
-      data/splits/test.csv --target-column target --model-dir models --report-dir
+      data/splits/test.csv --target-column Churn --model-dir models --report-dir
       reports --n-iter 6 --cv 3
     deps:
     - src/training/hpo.py

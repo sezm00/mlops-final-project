@@ -47,8 +47,7 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
         df["IsNewCustomer"] = (df["tenure"] <= threshold).astype(int)
 
         df["IsRiskySegment"] = (
-            (df["Contract"] == fe["risky_contract_value"]) &
-            (df["tenure"] <= threshold)
+            (df["Contract"] == fe["risky_contract_value"]) & (df["tenure"] <= threshold)
         ).astype(int)
 
         # -------------------------

@@ -40,14 +40,13 @@ Leakage guarantees:
 
 import os
 
-import numpy as np
 import pandas as pd
 import yaml
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Config
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def load_params() -> dict:
     with open("configs/params.yaml") as f:
@@ -57,6 +56,7 @@ def load_params() -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 1: Cleaning
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def clean(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     """
@@ -99,6 +99,7 @@ def clean(df: pd.DataFrame, params: dict) -> pd.DataFrame:
 # Step 2: Target Encoding
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def encode_target(df: pd.DataFrame, target: str) -> pd.DataFrame:
     """
     Encode Churn: Yes → 1, No → 0.
@@ -118,6 +119,7 @@ def encode_target(df: pd.DataFrame, target: str) -> pd.DataFrame:
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 3: Reference / Production Split
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def split_reference_production(
     df: pd.DataFrame,
@@ -147,7 +149,9 @@ def split_reference_production(
 
     print(f"[prepare] Split index : {split_idx} of {len(df)}")
     print(f"[prepare] Reference   : {reference_df.shape} | churn rate: {ref_churn:.3f}")
-    print(f"[prepare] Production  : {production_df.shape} | churn rate: {prod_churn:.3f}")
+    print(
+        f"[prepare] Production  : {production_df.shape} | churn rate: {prod_churn:.3f}"
+    )
 
     gap = abs(ref_churn - prod_churn)
     if gap > 0.05:
@@ -162,6 +166,7 @@ def split_reference_production(
 # ─────────────────────────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def prepare() -> None:
     params = load_params()
@@ -193,10 +198,14 @@ def prepare() -> None:
     reference_df = clean(reference_df, params)
 
     nan_total = reference_df.isnull().sum().sum()
-    print(f"[prepare] Reference after cleaning : {reference_df.shape} | NaN total: {nan_total}")
+    print(
+        f"[prepare] Reference after cleaning : {reference_df.shape} | NaN total: {nan_total}"
+    )
 
     if nan_total > 0:
-        print(f"[prepare]   NaN breakdown:\n{reference_df.isnull().sum()[reference_df.isnull().sum() > 0]}")
+        print(
+            f"[prepare]   NaN breakdown:\n{reference_df.isnull().sum()[reference_df.isnull().sum() > 0]}"
+        )
 
     # ── Production remains raw ────────────────────────────────────────────────
     print(f"[prepare] Production kept raw : {production_df.shape}")
