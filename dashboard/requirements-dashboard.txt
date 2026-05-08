@@ -1,0 +1,10 @@
+flask
+pandas
+pyyaml
+joblib
+numpy
+mlflow
+scikit-learn
+xgboost
+lightgbm
+catboost
