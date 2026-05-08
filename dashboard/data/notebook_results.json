@@ -1,0 +1,602 @@
+{
+  "metrics": {
+    "problem_type": "classification",
+    "accuracy": 0.94,
+    "precision_macro": 0.94,
+    "recall_macro": 0.94,
+    "f1_macro": 0.94,
+    "roc_auc": 0.9863999999999999
+  },
+  "best_model_summary": {
+    "final_model_choice": "all_features",
+    "final_model_name": "xgboost_all_features",
+    "final_reason": "Selected-feature model did not outperform the all-feature model, so feature importance is kept as analysis only.",
+    "primary_metric": "f1_macro",
+    "all_features_best_model_name": "xgboost",
+    "all_features_score": 0.9499949994999499,
+    "all_features_metrics": {
+      "problem_type": "classification",
+      "accuracy": 0.95,
+      "precision_macro": 0.9501800720288115,
+      "recall_macro": 0.95,
+      "f1_macro": 0.9499949994999499,
+      "roc_auc": 0.9892000000000001
+    },
+    "selected_features_score": 0.9499949994999499,
+    "selected_features_metrics": {
+      "problem_type": "classification",
+      "accuracy": 0.95,
+      "precision_macro": 0.9501800720288115,
+      "recall_macro": 0.95,
+      "f1_macro": 0.9499949994999499,
+      "roc_auc": 0.9888
+    },
+    "feature_importance_kept_as_analysis": true,
+    "selected_features_analysis": [
+      "feature_1",
+      "feature_5",
+      "feature_3",
+      "feature_4",
+      "feature_6",
+      "feature_7",
+      "feature_0",
+      "feature_2"
+    ],
+    "top_10_reference_features": [
+      "feature_1",
+      "feature_5",
+      "feature_3",
+      "feature_4",
+      "feature_6",
+      "feature_7",
+      "feature_0",
+      "feature_2"
+    ],
+    "final_features": [
+      "feature_0",
+      "feature_1",
+      "feature_2",
+      "feature_3",
+      "feature_4",
+      "feature_5",
+      "feature_6",
+      "feature_7"
+    ],
+    "final_score": 0.9499949994999499,
+    "final_metrics": {
+      "problem_type": "classification",
+      "accuracy": 0.95,
+      "precision_macro": 0.9501800720288115,
+      "recall_macro": 0.95,
+      "f1_macro": 0.9499949994999499,
+      "roc_auc": 0.9892000000000001
+    },
+    "model_path": "models/best_model.pkl",
+    "best_all_features_model_path": "models/best_all_features_model.pkl",
+    "selected_feature_model_path": "models/best_selected_feature_model.pkl",
+    "final_run_id": "31c4d0efa5874d3c9098720175179a97",
+    "leakage_status": "PASS"
+  },
+  "selected_features": {
+    "method": "permutation_importance_with_validation_cutoff_selection",
+    "reference_best_model_name": "xgboost",
+    "primary_metric": "f1_macro",
+    "selected_candidate_name": "top_8",
+    "selected_feature_count": 8,
+    "selected_features": [
+      "feature_1",
+      "feature_5",
+      "feature_3",
+      "feature_4",
+      "feature_6",
+      "feature_7",
+      "feature_0",
+      "feature_2"
+    ],
+    "top_10_reference_features": [
+      "feature_1",
+      "feature_5",
+      "feature_3",
+      "feature_4",
+      "feature_6",
+      "feature_7",
+      "feature_0",
+      "feature_2"
+    ],
+    "feature_selection_validation_score": 0.9124863259884357
+  },
+  "leakage_report": {
+    "status": "PASS",
+    "warnings": [],
+    "details": {
+      "train_test_feature_overlap_count": 0,
+      "features_identical_to_target": [],
+      "high_target_correlations": {},
+      "suspicious_categorical_features": {}
+    }
+  },
+  "dvc_results": {
+    "dvc_init_success": true,
+    "dvc_repro_success": true,
+    "dvc_status_success": true,
+    "dvc_metrics_success": true,
+    "dvc_dag_success": true,
+    "stages_attempted": [
+      "train",
+      "hpo",
+      "register"
+    ],
+    "stage_results": {
+      "train": {
+        "label": "repro_train",
+        "command": "/usr/bin/python3 -m dvc repro --single-item train",
+        "returncode": 0,
+        "stdout_path": "reports/pipeline/dvc_repro_train_stdout.txt",
+        "stderr_path": "reports/pipeline/dvc_repro_train_stderr.txt",
+        "success": true
+      },
+      "hpo": {
+        "label": "repro_hpo",
+        "command": "/usr/bin/python3 -m dvc repro --single-item hpo",
+        "returncode": 0,
+        "stdout_path": "reports/pipeline/dvc_repro_hpo_stdout.txt",
+        "stderr_path": "reports/pipeline/dvc_repro_hpo_stderr.txt",
+        "success": true
+      },
+      "register": {
+        "label": "repro_register",
+        "command": "/usr/bin/python3 -m dvc repro --single-item register",
+        "returncode": 0,
+        "stdout_path": "reports/pipeline/dvc_repro_register_stdout.txt",
+        "stderr_path": "reports/pipeline/dvc_repro_register_stderr.txt",
+        "success": true
+      }
+    },
+    "dvc_init_result": {
+      "label": "init",
+      "command": "/usr/bin/python3 -m dvc init --no-scm",
+      "returncode": 0,
+      "stdout_path": "reports/pipeline/dvc_init_stdout.txt",
+      "stderr_path": "reports/pipeline/dvc_init_stderr.txt",
+      "success": true
+    },
+    "dvc_status_result": {
+      "label": "status",
+      "command": "/usr/bin/python3 -m dvc status",
+      "returncode": 0,
+      "stdout_path": "reports/pipeline/dvc_status_stdout.txt",
+      "stderr_path": "reports/pipeline/dvc_status_stderr.txt",
+      "success": true
+    },
+    "dvc_dag_result": {
+      "label": "dag",
+      "command": "/usr/bin/python3 -m dvc dag",
+      "returncode": 0,
+      "stdout_path": "reports/pipeline/dvc_dag_stdout.txt",
+      "stderr_path": "reports/pipeline/dvc_dag_stderr.txt",
+      "success": true
+    },
+    "dvc_metrics_result": {
+      "label": "metrics_show",
+      "command": "/usr/bin/python3 -m dvc metrics show",
+      "returncode": 0,
+      "stdout_path": "reports/pipeline/dvc_metrics_show_stdout.txt",
+      "stderr_path": "reports/pipeline/dvc_metrics_show_stderr.txt",
+      "success": true
+    },
+    "dvc_lock_created": true,
+    "dvc_yaml_exists": true,
+    "model_registry_summary_created": true
+  },
+  "registry_summary": {
+    "registered_model_name": "BestMLOpsModel",
+    "registered_model_version": "1",
+    "registered_run_id": "2a2b3120871e418aac2ab088ff50db95",
+    "metric_name": "f1_macro",
+    "metric_value": 0.9499949994999499,
+    "model_name_from_run": "xgboost_all_features",
+    "model_stage_from_run": "final_model",
+    "final_model_choice": "all_features",
+    "final_reason": "Selected-feature model did not outperform the all-feature model, so feature importance is kept as analysis only.",
+    "feature_importance_kept_as_analysis": true,
+    "selected_features_analysis": [
+      "feature_1",
+      "feature_5",
+      "feature_3",
+      "feature_4",
+      "feature_6",
+      "feature_7",
+      "feature_0",
+      "feature_2"
+    ],
+    "top_10_reference_features": [
+      "feature_1",
+      "feature_5",
+      "feature_3",
+      "feature_4",
+      "feature_6",
+      "feature_7",
+      "feature_0",
+      "feature_2"
+    ],
+    "promotion_message": "Model moved to Production."
+  },
+  "hpo_summary": {
+    "best_hpo_model_name": "xgboost",
+    "primary_metric": "f1_macro",
+    "best_score": 0.9499949994999499,
+    "best_model_path": "models/best_tuned_model.pkl",
+    "best_summary": {
+      "model_name": "xgboost",
+      "problem_type": "classification",
+      "scoring": "f1_macro",
+      "primary_metric": "f1_macro",
+      "best_cv_score": 0.917427076065831,
+      "test_score": 0.9499949994999499,
+      "best_params": {
+        "model__subsample": 0.9,
+        "model__n_estimators": 300,
+        "model__max_depth": 4,
+        "model__learning_rate": 0.1,
+        "model__colsample_bytree": 1.0
+      },
+      "train_metrics": {
+        "problem_type": "classification",
+        "accuracy": 1.0,
+        "precision_macro": 1.0,
+        "recall_macro": 1.0,
+        "f1_macro": 1.0,
+        "roc_auc": 1.0
+      },
+      "test_metrics": {
+        "problem_type": "classification",
+        "accuracy": 0.95,
+        "precision_macro": 0.9501800720288115,
+        "recall_macro": 0.95,
+        "f1_macro": 0.9499949994999499,
+        "roc_auc": 0.9876
+      },
+      "diagnostics": {
+        "model_name": "hpo_xgboost",
+        "verdict": "GOOD",
+        "warnings": [
+          "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.9499949994999499,
+        "gap": 0.05000500050005008
+      },
+      "model_path": "models/tuned_xgboost_model.pkl"
+    },
+    "all_hpo_summaries": [
+      {
+        "model_name": "random_forest",
+        "problem_type": "classification",
+        "scoring": "f1_macro",
+        "primary_metric": "f1_macro",
+        "best_cv_score": 0.9148866680006539,
+        "test_score": 0.9299929992999301,
+        "best_params": {
+          "model__n_estimators": 200,
+          "model__min_samples_split": 2,
+          "model__min_samples_leaf": 2,
+          "model__max_features": "sqrt",
+          "model__max_depth": 10
+        },
+        "train_metrics": {
+          "problem_type": "classification",
+          "accuracy": 0.9925,
+          "precision_macro": 0.992535820559626,
+          "recall_macro": 0.9924742474247426,
+          "f1_macro": 0.9924988279418658,
+          "roc_auc": 0.9997249724972497
+        },
+        "test_metrics": {
+          "problem_type": "classification",
+          "accuracy": 0.93,
+          "precision_macro": 0.930172068827531,
+          "recall_macro": 0.9299999999999999,
+          "f1_macro": 0.9299929992999301,
+          "roc_auc": 0.9796
+        },
+        "diagnostics": {
+          "model_name": "hpo_random_forest",
+          "verdict": "GOOD",
+          "warnings": [
+            "Model looks acceptable: test f1_macro=0.9300, gap=0.0625."
+          ],
+          "primary_metric": "f1_macro",
+          "train_score": 0.9924988279418658,
+          "test_score": 0.9299929992999301,
+          "gap": 0.06250582864193577
+        },
+        "model_path": "models/tuned_random_forest_model.pkl"
+      },
+      {
+        "model_name": "xgboost",
+        "problem_type": "classification",
+        "scoring": "f1_macro",
+        "primary_metric": "f1_macro",
+        "best_cv_score": 0.917427076065831,
+        "test_score": 0.9499949994999499,
+        "best_params": {
+          "model__subsample": 0.9,
+          "model__n_estimators": 300,
+          "model__max_depth": 4,
+          "model__learning_rate": 0.1,
+          "model__colsample_bytree": 1.0
+        },
+        "train_metrics": {
+          "problem_type": "classification",
+          "accuracy": 1.0,
+          "precision_macro": 1.0,
+          "recall_macro": 1.0,
+          "f1_macro": 1.0,
+          "roc_auc": 1.0
+        },
+        "test_metrics": {
+          "problem_type": "classification",
+          "accuracy": 0.95,
+          "precision_macro": 0.9501800720288115,
+          "recall_macro": 0.95,
+          "f1_macro": 0.9499949994999499,
+          "roc_auc": 0.9876
+        },
+        "diagnostics": {
+          "model_name": "hpo_xgboost",
+          "verdict": "GOOD",
+          "warnings": [
+            "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+          ],
+          "primary_metric": "f1_macro",
+          "train_score": 1.0,
+          "test_score": 0.9499949994999499,
+          "gap": 0.05000500050005008
+        },
+        "model_path": "models/tuned_xgboost_model.pkl"
+      },
+      {
+        "model_name": "lightgbm",
+        "problem_type": "classification",
+        "scoring": "f1_macro",
+        "primary_metric": "f1_macro",
+        "best_cv_score": 0.925005880960487,
+        "test_score": 0.9199679871948779,
+        "best_params": {
+          "model__subsample": 0.8,
+          "model__num_leaves": 15,
+          "model__n_estimators": 300,
+          "model__max_depth": 5,
+          "model__learning_rate": 0.05
+        },
+        "train_metrics": {
+          "problem_type": "classification",
+          "accuracy": 1.0,
+          "precision_macro": 1.0,
+          "recall_macro": 1.0,
+          "f1_macro": 1.0,
+          "roc_auc": 1.0
+        },
+        "test_metrics": {
+          "problem_type": "classification",
+          "accuracy": 0.92,
+          "precision_macro": 0.9206730769230769,
+          "recall_macro": 0.9199999999999999,
+          "f1_macro": 0.9199679871948779,
+          "roc_auc": 0.978
+        },
+        "diagnostics": {
+          "model_name": "hpo_lightgbm",
+          "verdict": "GOOD",
+          "warnings": [
+            "Model looks acceptable: test f1_macro=0.9200, gap=0.0800."
+          ],
+          "primary_metric": "f1_macro",
+          "train_score": 1.0,
+          "test_score": 0.9199679871948779,
+          "gap": 0.08003201280512207
+        },
+        "model_path": "models/tuned_lightgbm_model.pkl"
+      },
+      {
+        "model_name": "catboost",
+        "problem_type": "classification",
+        "scoring": "f1_macro",
+        "primary_metric": "f1_macro",
+        "best_cv_score": 0.9199495105091939,
+        "test_score": 0.94,
+        "best_params": {
+          "model__learning_rate": 0.05,
+          "model__l2_leaf_reg": 1,
+          "model__iterations": 300,
+          "model__depth": 5
+        },
+        "train_metrics": {
+          "problem_type": "classification",
+          "accuracy": 1.0,
+          "precision_macro": 1.0,
+          "recall_macro": 1.0,
+          "f1_macro": 1.0,
+          "roc_auc": 1.0
+        },
+        "test_metrics": {
+          "problem_type": "classification",
+          "accuracy": 0.94,
+          "precision_macro": 0.94,
+          "recall_macro": 0.94,
+          "f1_macro": 0.94,
+          "roc_auc": 0.9863999999999999
+        },
+        "diagnostics": {
+          "model_name": "hpo_catboost",
+          "verdict": "GOOD",
+          "warnings": [
+            "Model looks acceptable: test f1_macro=0.9400, gap=0.0600."
+          ],
+          "primary_metric": "f1_macro",
+          "train_score": 1.0,
+          "test_score": 0.94,
+          "gap": 0.06000000000000005
+        },
+        "model_path": "models/tuned_catboost_model.pkl"
+      }
+    ]
+  },
+  "model_diagnostics": [
+    {
+      "model_name": "logistic_regression_all_features",
+      "verdict": "GOOD",
+      "warnings": [
+        "Model looks acceptable: test f1_macro=0.8488, gap=0.0133."
+      ],
+      "primary_metric": "f1_macro",
+      "train_score": 0.8621199681622471,
+      "test_score": 0.8487750781328763,
+      "gap": 0.013344890029370782
+    },
+    {
+      "model_name": "random_forest_all_features",
+      "verdict": "GOOD",
+      "warnings": [
+        "Model looks acceptable: test f1_macro=0.9400, gap=0.0600."
+      ],
+      "primary_metric": "f1_macro",
+      "train_score": 1.0,
+      "test_score": 0.94,
+      "gap": 0.06000000000000005
+    },
+    {
+      "model_name": "gradient_boosting_all_features",
+      "verdict": "GOOD",
+      "warnings": [
+        "Model looks acceptable: test f1_macro=0.9300, gap=0.0700."
+      ],
+      "primary_metric": "f1_macro",
+      "train_score": 1.0,
+      "test_score": 0.9299929992999301,
+      "gap": 0.07000700070006993
+    },
+    {
+      "model_name": "svc_all_features",
+      "verdict": "GOOD",
+      "warnings": [
+        "Model looks acceptable: test f1_macro=0.9200, gap=0.0250."
+      ],
+      "primary_metric": "f1_macro",
+      "train_score": 0.9449779911964786,
+      "test_score": 0.92,
+      "gap": 0.02497799119647859
+    },
+    {
+      "model_name": "xgboost_all_features",
+      "verdict": "GOOD",
+      "warnings": [
+        "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+      ],
+      "primary_metric": "f1_macro",
+      "train_score": 1.0,
+      "test_score": 0.9499949994999499,
+      "gap": 0.05000500050005008
+    },
+    {
+      "model_name": "lightgbm_all_features",
+      "verdict": "GOOD",
+      "warnings": [
+        "Model looks acceptable: test f1_macro=0.9400, gap=0.0600."
+      ],
+      "primary_metric": "f1_macro",
+      "train_score": 1.0,
+      "test_score": 0.9399759903961584,
+      "gap": 0.06002400960384158
+    },
+    {
+      "model_name": "catboost_all_features",
+      "verdict": "GOOD",
+      "warnings": [
+        "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+      ],
+      "primary_metric": "f1_macro",
+      "train_score": 1.0,
+      "test_score": 0.9499949994999499,
+      "gap": 0.05000500050005008
+    },
+    {
+      "model_name": "xgboost_selected_features",
+      "verdict": "GOOD",
+      "warnings": [
+        "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+      ],
+      "primary_metric": "f1_macro",
+      "train_score": 1.0,
+      "test_score": 0.9499949994999499,
+      "gap": 0.05000500050005008
+    }
+  ],
+  "feature_importance": [
+    {
+      "feature": "feature_1",
+      "importance_mean": 0.176835,
+      "importance_std": 0.029649,
+      "importance_positive": 0.176835,
+      "importance_ratio": 0.38839,
+      "cumulative_importance": 0.38839
+    },
+    {
+      "feature": "feature_5",
+      "importance_mean": 0.125064,
+      "importance_std": 0.022565,
+      "importance_positive": 0.125064,
+      "importance_ratio": 0.274682,
+      "cumulative_importance": 0.663072
+    },
+    {
+      "feature": "feature_3",
+      "importance_mean": 0.065703,
+      "importance_std": 0.015078,
+      "importance_positive": 0.065703,
+      "importance_ratio": 0.144306,
+      "cumulative_importance": 0.807378
+    },
+    {
+      "feature": "feature_4",
+      "importance_mean": 0.042293,
+      "importance_std": 0.016469,
+      "importance_positive": 0.042293,
+      "importance_ratio": 0.09289,
+      "cumulative_importance": 0.900267
+    },
+    {
+      "feature": "feature_6",
+      "importance_mean": 0.021959,
+      "importance_std": 0.013699,
+      "importance_positive": 0.021959,
+      "importance_ratio": 0.04823,
+      "cumulative_importance": 0.948497
+    },
+    {
+      "feature": "feature_7",
+      "importance_mean": 0.012514,
+      "importance_std": 0.006251,
+      "importance_positive": 0.012514,
+      "importance_ratio": 0.027484,
+      "cumulative_importance": 0.975981
+    },
+    {
+      "feature": "feature_0",
+      "importance_mean": 0.007804,
+      "importance_std": 0.006045,
+      "importance_positive": 0.007804,
+      "importance_ratio": 0.01714,
+      "cumulative_importance": 0.993121
+    },
+    {
+      "feature": "feature_2",
+      "importance_mean": 0.003132,
+      "importance_std": 0.014986,
+      "importance_positive": 0.003132,
+      "importance_ratio": 0.006879,
+      "cumulative_importance": 1.0
+    }
+  ]
+}
