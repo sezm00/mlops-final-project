@@ -1,41 +1,114 @@
 schema: '2.0'
 stages:
-  prepare:
-    cmd: python src/data/prepare.py
+  train:
+    cmd: python src/training/train.py --train-path data/splits/train.csv 
+      --test-path data/splits/test.csv --target-column target --model-dir models
+      --report-dir reports
     deps:
-    - path: configs/params.yaml
+    - path: data/splits/test.csv
+      hash: md5
+      md5: 064879f4a3855ddd65ad7098229875a7
+      size: 15806
+    - path: data/splits/train.csv
       hash: md5
       md5: 3dc50b8f8b408af2eba2fcd9825f5abb
       size: 5009
     - path: data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
       hash: md5
-      md5: 0f9de68e012bd3aed5fa7cdc9fc421af
-      size: 977501
-    - path: src/data/prepare.py
+      md5: 2b8672b70c3e56c77106b159e43c89cc
+      size: 8198
+    - path: src/evaluation/evaluate.py
       hash: md5
       md5: a324ade431361b1351e82ffc1c24c8fa
       size: 10625
     outs:
     - path: data/processed/cleaned_reference.csv
       hash: md5
-      md5: d392cd040bfaffe4c0e13f8f1de8cd4c
-      size: 509550
-    - path: data/splits/production.csv
+      md5: 3b1f5b1d6cc258cf2653633f9a616380
+      size: 743
+    - path: src/training/train.py
       hash: md5
-      md5: ab92cb0afcc6ab7126cf13912bf2e0f0
-      size: 289855
-  featurize:
-    cmd: python -m src.features.featurize
+      md5: 7295722dd97d20273d2ec3162e0af9a1
+      size: 37804
+    outs:
+    - path: models/best_all_features_model.pkl
+      hash: md5
+      md5: b42826792feb6ea363a823b4c56d7a65
+      size: 259190
+    - path: models/best_model.pkl
+      hash: md5
+      md5: b42826792feb6ea363a823b4c56d7a65
+      size: 259190
+    - path: models/best_reference_model.pkl
+      hash: md5
+      md5: b42826792feb6ea363a823b4c56d7a65
+      size: 259190
+    - path: models/best_selected_feature_model.pkl
+      hash: md5
+      md5: 017db8bb2adca6745340d2589f1ce49b
+      size: 256606
+    - path: models/feature_columns.json
+      hash: md5
+      md5: 5ae8df0f99035d5b1b67ba28378e085a
+      size: 1237
+    - path: reports/best_model_summary.json
+      hash: md5
+      md5: c1b95f4bfd160869d0b321afd45e82f7
+      size: 2157
+    - path: reports/data_leakage_report.json
+      hash: md5
+      md5: dc3c43b8817406ae64435ea30376aabe
+      size: 245
+    - path: reports/feature_importance/all_feature_importance.csv
+      hash: md5
+      md5: 681a6340dc48d1d4699b3aea76957cd0
+      size: 963
+    - path: reports/feature_importance/feature_selection_results.json
+      hash: md5
+      md5: 804f2b15c5958ba6fae3b91faab3e1c1
+      size: 3317
+    - path: reports/feature_importance/selected_features.json
+      hash: md5
+      md5: fe8039b79cf8c63ad4208a2c3b1a3cee
+      size: 698
+    - path: reports/feature_importance/top_10_feature_importance.csv
+      hash: md5
+      md5: 681a6340dc48d1d4699b3aea76957cd0
+      size: 963
+    - path: reports/feature_importance/top_10_features.json
+      hash: md5
+      md5: 39b967ff8423ab5fad44059db7e01c14
+      size: 268
+    - path: reports/metrics.json
+      hash: md5
+      md5: f872fde77ab528089fabe8b30175a753
+      size: 202
+    - path: reports/mlflow_run_summary.csv
+      hash: md5
+      md5: 0259b4e711970ebd732be4ba7ab4eb29
+      size: 2699
+    - path: reports/model_diagnostics_report.json
+      hash: md5
+      md5: c631ec037635f9ab7b4d3b2360afbbc0
+      size: 2708
+    - path: reports/selected_feature_model_summary.json
+      hash: md5
+      md5: 60c8b4f4e1d58536d07ebc66251a883c
+      size: 1383
+  hpo:
+    cmd: python src/training/hpo.py --train-path data/splits/train.csv 
+      --test-path data/splits/test.csv --target-column target --model-dir models
+      --report-dir reports --n-iter 6 --cv 3
     deps:
-    - path: configs/params.yaml
+    - path: data/splits/test.csv
       hash: md5
       md5: 3dc50b8f8b408af2eba2fcd9825f5abb
       size: 5009
     - path: data/processed/cleaned_reference.csv
       hash: md5
-      md5: d392cd040bfaffe4c0e13f8f1de8cd4c
-      size: 509550
-    - path: src/features/feature_engineer.py
+      md5: de4b8920f56dec56311612f1947fedd0
+      size: 62998
+    - path: src/evaluation/diagnostics.py
       hash: md5
       md5: 96f07273de7b16edbdedc110f97d402a
       size: 1836
@@ -46,33 +119,28 @@ stages:
     outs:
     - path: data/processed/featurized_reference.csv
       hash: md5
-      md5: 65b866c473672988eae5c3a349356271
-      size: 797080
-    - path: models/feature_engineer.joblib
+      md5: 3e34ef525d89f1a346d1c03872d6eb35
+      size: 15263
+    - path: src/training/mlflow_setup.py
       hash: md5
       md5: 908187aa602f5941923bed04f07be949
       size: 1966
   validate_schema:
     cmd: python src/features/validate_schema.py
     deps:
-    - path: configs/params.yaml
+    - path: reports/best_model_summary.json
       hash: md5
-      md5: 601b5681b84c567b0817ee94f55db6f8
-      size: 6002
-    - path: data/splits/production.csv
+      md5: c1b95f4bfd160869d0b321afd45e82f7
+      size: 2157
+    - path: reports/feature_importance/selected_features.json
       hash: md5
-      md5: b433fb89885399384869da7f29ba6005
-      size: 341907
-    - path: data/splits/reference.csv
+      md5: fe8039b79cf8c63ad4208a2c3b1a3cee
+      size: 698
+    - path: src/training/mlflow_setup.py
       hash: md5
-      md5: 65b866c473672988eae5c3a349356271
-      size: 797080
-    - path: src/features/validate_schema.py
-      hash: md5
-      md5: 295e452eb1fd9954d74ece9c80b4a8f9
-      size: 3888
-    outs:
-    - path: data/splits/.schema_validated.flag
+      md5: 3b1f5b1d6cc258cf2653633f9a616380
+      size: 743
+    - path: src/training/register_model.py
       hash: md5
       md5: d05b45e38c001045fb460d8218457228
       size: 23
@@ -131,15 +199,7 @@ stages:
         stat_features:
           high_value_quantile: 0.75
     outs:
-    - path: data/splits/test.csv
-      hash: md5
-      md5: 0008fec9bffba059638baf2c14c82aac
-      size: 236755
-    - path: data/splits/train.csv
-      hash: md5
-      md5: e55b73949a795079c43015141559aa6d
-      size: 1395567
-    - path: models/preprocessing_pipeline.joblib
+    - path: reports/model_registry_summary.json
       hash: md5
       md5: d606607535083f1cd19e77328fdec615
       size: 10973

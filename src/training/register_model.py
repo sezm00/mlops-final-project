@@ -87,6 +87,55 @@ def load_json_if_exists(path):
         return json.load(file)
 
 
+def save_registry_summary(
+    args,
+    result,
+    run_id,
+    best_metric_value,
+    best_run,
+    final_model_choice,
+    final_reason,
+    feature_importance_kept_as_analysis,
+    selected_features,
+    top_10_reference_features,
+    promotion_message,
+):
+    """
+    Save a local JSON summary of the MLflow registration result.
+
+    This file is useful for DVC because it records:
+    - registered model name
+    - registered model version
+    - run ID
+    - metric value
+    - final model choice
+    - feature importance metadata
+    """
+    registry_summary = {
+        "registered_model_name": args.registered_model_name,
+        "registered_model_version": str(result.version),
+        "registered_run_id": run_id,
+        "metric_name": args.metric_name,
+        "metric_value": float(best_metric_value),
+        "model_name_from_run": best_run.data.params.get("model_name", "unknown"),
+        "model_stage_from_run": best_run.data.params.get("model_stage", "unknown"),
+        "final_model_choice": final_model_choice,
+        "final_reason": final_reason,
+        "feature_importance_kept_as_analysis": feature_importance_kept_as_analysis,
+        "selected_features_analysis": selected_features,
+        "top_10_reference_features": top_10_reference_features,
+        "promotion_message": promotion_message,
+    }
+
+    summary_path = Path(args.registry_summary_path)
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(summary_path, "w", encoding="utf-8") as file:
+        json.dump(registry_summary, file, indent=4)
+
+    return summary_path, registry_summary
+
+
 def register_and_promote_model(args):
     """
     Register the best MLflow model and promote it.
@@ -206,6 +255,20 @@ def register_and_promote_model(args):
 
         print(f"Stage transition warning: {error}")
 
+    registry_summary_path, registry_summary = save_registry_summary(
+        args=args,
+        result=result,
+        run_id=run_id,
+        best_metric_value=best_metric_value,
+        best_run=best_run,
+        final_model_choice=final_model_choice,
+        final_reason=final_reason,
+        feature_importance_kept_as_analysis=feature_importance_kept_as_analysis,
+        selected_features=selected_features,
+        top_10_reference_features=top_10_reference_features,
+        promotion_message=promotion_message,
+    )
+
     print("Best model registered successfully.")
     print(f"Best run ID: {run_id}")
     print(f"Metric used: {args.metric_name}")
@@ -218,6 +281,7 @@ def register_and_promote_model(args):
     print(f"Feature importance kept as analysis: {feature_importance_kept_as_analysis}")
     print(f"Selected features analysis: {selected_features}")
     print(f"Top 10 reference features: {top_10_reference_features}")
+    print(f"Registry summary saved to: {registry_summary_path}")
     print(promotion_message)
 
 
@@ -232,13 +296,9 @@ def parse_args():
     parser.add_argument("--registered-model-name", default="BestMLOpsModel")
     parser.add_argument("--metric-name", default="f1_macro")
     parser.add_argument("--higher-is-better", action="store_true")
-    parser.add_argument(
-        "--selected-features-path",
-        default="reports/feature_importance/selected_features.json",
-    )
-    parser.add_argument(
-        "--best-model-summary-path", default="reports/best_model_summary.json"
-    )
+    parser.add_argument("--selected-features-path", default="reports/feature_importance/selected_features.json")
+    parser.add_argument("--best-model-summary-path", default="reports/best_model_summary.json")
+    parser.add_argument("--registry-summary-path", default="reports/model_registry_summary.json")
 
     return parser.parse_args()
 
