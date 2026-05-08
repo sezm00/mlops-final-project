@@ -11,9 +11,8 @@ env:
   MIN_F1_MACRO: "0.70"
 
 # ===================================================
-# GLOBAL FIX: AWS credentials injected once per job
+# GLOBAL AWS ENV (used by all jobs)
 # ===================================================
-
 jobs:
 
 # ---------------------------------------------------
@@ -41,6 +40,7 @@ jobs:
 
       - name: Ruff format check
         run: ruff format --check .
+
 
 # ---------------------------------------------------
 # 2. TESTS
@@ -72,13 +72,19 @@ jobs:
             --cov-fail-under=70 \
             -v
 
+
 # ---------------------------------------------------
-# 3. DATA VALIDATION (FIXED: AWS + DVC READY)
+# 3. DATA VALIDATION
 # ---------------------------------------------------
   data-validation:
     name: Data Validation
     runs-on: ubuntu-latest
     needs: tests
+
+    env:
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -88,22 +94,22 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
-      - name: Install dependencies + DVC S3 support
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --prefer-binary -r requirements.txt
           pip install "dvc[s3]"
 
-      # ✅ CRITICAL FIX: AWS credentials for DVC
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Cache DVC
+        uses: actions/cache@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          path: .dvc/cache
+          key: dvc-${{ runner.os }}-${{ hashFiles('dvc.lock') }}
 
-      - name: Pull DVC data
-        run: dvc pull
+      - name: Pull DVC data (safe retry)
+        run: |
+          dvc pull --retry 3
+
 
       - name: Run Great Expectations validation
         run: |
@@ -117,13 +123,20 @@ jobs:
           print('Data validation passed')
           "
 
+
 # ---------------------------------------------------
-# 4. MODEL VALIDATION (FIXED SAME AWS ISSUE)
+# 4. MODEL VALIDATION
 # ---------------------------------------------------
   model-validation:
     name: Model Validation
     runs-on: ubuntu-latest
     needs: data-validation
+
+    env:
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      MIN_F1_MACRO: ${{ env.MIN_F1_MACRO }}
 
     steps:
       - uses: actions/checkout@v4
@@ -133,21 +146,20 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
-      - name: Install dependencies + DVC
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --prefer-binary -r requirements.txt
           pip install "dvc[s3]"
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Cache DVC
+        uses: actions/cache@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          path: .dvc/cache
+          key: dvc-${{ runner.os }}-${{ hashFiles('dvc.lock') }}
 
-      - name: Pull DVC data
-        run: dvc pull
+      - name: Pull DVC data (safe retry)
+        run: dvc pull --retry 3
 
       - name: Validate model quality
         run: |
@@ -159,20 +171,16 @@ jobs:
           model_path = Path('models/best_model.pkl')
           metrics_path = Path('reports/metrics.json')
 
-          # -------------------------
-          # Guard: model must exist
-          # -------------------------
-          assert model_path.exists(), "Model file missing"
+          # ---- Guard: model must exist
+          if not model_path.exists():
+              raise FileNotFoundError("Model file missing")
 
           model = joblib.load(model_path)
           assert hasattr(model, "predict"), "Model must implement predict"
 
-          # -------------------------
-          # Guard: metrics file exists
-          # -------------------------
+          # ---- Guard: metrics file (strict fail, NOT silent)
           if not metrics_path.exists():
-              print("WARNING: metrics.json not found. Skipping metric validation.")
-              exit(0)
+              raise FileNotFoundError("metrics.json missing - training step failed")
 
           metrics = json.loads(metrics_path.read_text())
           f1 = float(metrics.get("f1_macro", 0))
@@ -183,14 +191,20 @@ jobs:
 
           print(f"Model validation passed: f1_macro={f1:.3f}")
           EOF
-      
+
+
 # ---------------------------------------------------
-# 5. MONITORING (FIXED AWS + DVC)
+# 5. MONITORING
 # ---------------------------------------------------
   monitoring:
     name: Monitoring & Drift Detection
     runs-on: ubuntu-latest
     needs: model-validation
+
+    env:
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -200,23 +214,22 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
-      - name: Install dependencies + DVC
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --prefer-binary -r requirements.txt
           pip install "dvc[s3]"
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Cache DVC
+        uses: actions/cache@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          path: .dvc/cache
+          key: dvc-${{ runner.os }}-${{ hashFiles('dvc.lock') }}
 
-      - name: Pull DVC data
-        run: dvc pull
+      - name: Pull DVC data (safe retry)
+        run: dvc pull --retry 3
 
-      - name: Generate Evidently reports
+      - name: Run monitoring
         run: python monitoring/run_monitoring.py
 
       - name: Upload reports
@@ -224,6 +237,7 @@ jobs:
         with:
           name: evidently-reports
           path: monitoring/evidently_reports/
+
 
 # ---------------------------------------------------
 # 6. DOCKER
@@ -236,14 +250,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Pull DVC data (required for model)
+        run: |
+          pip install "dvc[s3]"
+          dvc pull --retry 3
+
       - name: Build Docker image
         run: docker build --pull -t churn-api:${{ github.sha }} .
 
       - name: Run container
         run: docker run -d -p 8000:8000 --name churn-api churn-api:${{ github.sha }}
 
-      - name: Wait for startup
-        run: sleep 15
-
-      - name: Healthcheck
-        run: curl --fail http://localhost:8000/health
+      - name: Wait for API (robust healthcheck)
+        run: |
+          for i in {1..10}; do
+            curl --fail http://localhost:8000/health && exit 0
+            sleep 3
+          done
+          exit 1
