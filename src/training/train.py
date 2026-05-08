@@ -617,9 +617,9 @@ def train_with_mlflow(args):
                 best_all_feature_model_name = model_name
                 best_all_feature_model = pipeline
                 best_all_feature_estimator = estimator
-                best_all_feature_train_metrics = train_metrics
+                # best_all_feature_train_metrics = train_metrics
                 best_all_feature_test_metrics = test_metrics
-                best_all_feature_diagnostics = diagnostics
+                # best_all_feature_diagnostics = diagnostics
 
     best_all_features_model_path = Path(args.model_dir) / "best_all_features_model.pkl"
     best_reference_model_path = Path(args.model_dir) / "best_reference_model.pkl"
