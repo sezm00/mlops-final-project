@@ -64,7 +64,7 @@ stages:
     - reports/metrics.json:
         cache: false
   hpo:
-    cmd: python src/training/hpo.py --train-path data/splits/train.csv --test-path
+    cmd: python -m src.training.hpo --train-path data/splits/train.csv --test-path
       data/splits/test.csv --target-column Churn --model-dir models --report-dir
       reports --n-iter 6 --cv 3
     deps:
@@ -79,7 +79,7 @@ stages:
     - reports/hpo_summary.json
     - reports/hpo_diagnostics_report.json
   register:
-    cmd: python src/training/register_model.py --experiment-name mlops_training_experiments
+    cmd: python -m src.training.register_model --experiment-name mlops_training_experiments
       --registered-model-name BestMLOpsModel --metric-name f1_macro --higher-is-better
       --selected-features-path reports/feature_importance/selected_features.json --best-model-summary-path
       reports/best_model_summary.json --registry-summary-path reports/model_registry_summary.json
