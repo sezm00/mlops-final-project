@@ -154,6 +154,6 @@ zc.lockfile==4.0.0
 # =========================================
 # OPTIONAL BOOSTING (gradient boosting)
 # =========================================
-xgboost==2.1.4
+xgboost==2.0.3
 lightgbm==4.6.0
 catboost==1.2.10
