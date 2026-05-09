@@ -1,7 +1,6 @@
 const PAGES = {
   overview: renderOverview,
   monitoring: renderMonitoring,
-  predict: renderPredict,
   drift: renderDrift,
   models: renderModels,
   features: renderFeatures,
@@ -50,147 +49,6 @@ async function loadHistory() {
   return res.ok ? await res.json() : [];
 }
 
-
-async function runDvcAction(action, stage = null) {
-  const res = await fetch('/api/dvc/run', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(stage ? { action, stage } : { action }),
-  });
-  return await res.json();
-}
-
-async function loadDvcReadiness() {
-  const res = await fetch('/api/dvc/readiness', { cache: 'no-store' });
-  return res.ok ? await res.json() : { outputs: [], missing: [], present: [] };
-}
-
-
-async function loadModelStatus() {
-  const res = await fetch('/api/model/status', { cache: 'no-store' });
-  return res.ok ? await res.json() : { live_prediction_ready: false, missing_required: [] };
-}
-
-
-function dvcEnvironmentCallout(env) {
-  if (!env) return '';
-  if (env.s3_remote_detected && !env.dvc_s3_available) {
-    return `<div class="callout danger-callout">
-      <strong>DVC is correct, but this dashboard Python environment is missing S3 support.</strong><br>
-      The remote is S3, so <span class="mono">dvc pull</span> cannot work from the dashboard until <span class="mono">dvc-s3</span> is installed in this exact interpreter:
-      <div class="mono" style="margin-top:10px">${env.install_command}</div>
-    </div>`;
-  }
-  if (env.ready_for_s3_pull) {
-    return `<div class="callout good-callout"><strong>DVC environment ready.</strong><br>DVC can run from this dashboard environment.</div>`;
-  }
-  return `<div class="callout warn-callout"><strong>DVC environment needs attention.</strong><br>${env.dvc_error || env.dvc_s3_error || 'Check DVC installation.'}</div>`;
-}
-
-
-function modelMissingCallout(status) {
-  const missing = arr(status?.missing_required);
-  if (!missing.length) {
-    return `<div class="callout good-callout"><strong>Model artifacts are available.</strong><br>Live prediction and batch scoring can run.</div>`;
-  }
-  return `<div class="callout danger-callout">
-    <strong>No model artifacts are present in the local workspace.</strong><br>
-    This is expected if DVC outputs have not been pulled or reproduced yet. The dashboard will not pretend that live prediction is available until these files exist:
-    <div style="margin-top:10px">${missing.map(item => `<div class="mono">- ${item.path}${item.stage ? ` <span class="badge info">${item.stage}</span>` : ''}</div>`).join('')}</div>
-  </div>`;
-}
-
-
-function scoreComparisonCallout(score) {
-  const sc = obj(score);
-  if (!sc.current_vs_notebook_delta && sc.current_vs_notebook_delta !== 0) {
-    return `<div class="callout"><strong>Score comparison unavailable.</strong><br>Live and notebook scores were not both available.</div>`;
-  }
-  const type = sc.large_drop_detected ? 'danger-callout' : 'good-callout';
-  const sign = sc.current_vs_notebook_delta >= 0 ? '+' : '';
-  return `<div class="callout ${type}">
-    <strong>${sc.large_drop_detected ? 'Large score drop detected' : 'Score comparison looks acceptable'}.</strong><br>
-    Current F1: <span class="mono">${fmt(sc.live_f1_macro ?? sc.recomputed_test_f1_macro)}</span><br>
-    Notebook reference F1: <span class="mono">${fmt(sc.notebook_reference_f1_macro)}</span><br>
-    Delta: <span class="mono">${sign}${fmt(sc.current_vs_notebook_delta)}</span><br>
-    <span>${sc.explanation || ''}</span>
-  </div>`;
-}
-
-function modelArtifactTable(data) {
-  const rows = arr(data.model_artifacts?.items).map(item => [
-    `<code>${item.path}</code>`,
-    item.exists ? badge('present', 'good') : badge('missing', 'warn'),
-    item.size ? fmtInt(item.size) : '-',
-  ]);
-  return table(['Artifact', 'Status', 'Size'], rows);
-}
-
-function monitoringSummaryBoxes(summary) {
-  const d = obj(summary?.drift);
-  const b = obj(summary?.baseline);
-  const rows = [
-    ['Current drift detected', String(!!d.drift_detected)],
-    ['Current drift share', fmt(d.drift_share)],
-    ['Current drifted features', `${d.drifted_feature_count ?? '-'} / ${d.total_feature_count ?? '-'}`],
-    ['Threshold', fmt(d.threshold ?? b.threshold)],
-    ['Baseline drift share', fmt(b.drift_share)],
-    ['Baseline drifted features', `${b.drifted_feature_count ?? '-'} / ${b.total_feature_count ?? '-'}`],
-  ];
-  return `<div class="metric-grid">${rows.map(([label, value]) => `<div class="metric-box"><div class="label">${label}</div><div class="value compact">${value}</div></div>`).join('')}</div>`;
-}
-
-function dvcActionPanel(compact = false) {
-  const stages = ['prepare', 'featurize', 'preprocess', 'train', 'hpo', 'register'];
-  return `<div class="controls dvc-actions">
-    <button class="control button dvc-run" data-action="status">DVC Status</button>
-    <button class="control button dvc-run" data-action="install_s3">Install DVC-S3</button>
-    <button class="control button dvc-run" data-action="pull">DVC Pull</button>
-    <button class="control button dvc-run" data-action="pull_force">DVC Pull --force</button>
-    <button class="control button dvc-run" data-action="repro_all">DVC Repro All</button>
-    ${compact ? '' : stages.map(stage => `<button class="control button dvc-run" data-action="repro_stage" data-stage="${stage}">Repro ${stage}</button>`).join('')}
-    <button class="control button dvc-run" data-action="metrics">Metrics</button>
-  </div>
-  <div class="json dvc-output" style="margin-top:12px">No DVC command run from this panel yet.</div>`;
-}
-
-function bindDvcActionPanel(container = document) {
-  const buttons = Array.from(container.querySelectorAll('.dvc-run'));
-  buttons.forEach(button => {
-    button.onclick = async () => {
-      const card = button.closest('.card') || document;
-      const output = card.querySelector('.dvc-output') || document.querySelector('.dvc-output');
-      const action = button.dataset.action;
-      const stage = button.dataset.stage || null;
-
-      if (output) {
-        output.textContent = `Running ${action}${stage ? ' ' + stage : ''}...`;
-      }
-
-      const result = await runDvcAction(action, stage);
-
-      if (output) {
-        output.textContent = safeJson(result);
-      }
-
-      if (result.ok) {
-        setTimeout(() => window.location.reload(), 1200);
-      }
-    };
-  });
-}
-
-function dvcArtifactTable(workspace) {
-  const rows = arr(workspace?.outputs || []).map(item => [
-    item.stage || '-',
-    `<code>${item.path}</code>`,
-    item.exists ? badge('present', 'good') : badge('missing', 'warn'),
-    item.size ? fmtInt(item.size) : '-',
-    item.source || '-',
-  ]);
-  return table(['Stage', 'Artifact', 'Status', 'Size', 'Source'], rows);
-}
-
 function setRoot(data) {
   document.querySelectorAll('[data-root]').forEach(el => el.textContent = data.project_root);
 }
@@ -224,21 +82,7 @@ function baseShell(title, subtitle) {
 }
 
 function finalMetrics(data) {
-  return obj(
-    data.display_metrics ||
-    data.best_model_summary?.final_metrics ||
-    data.best_model_summary?.all_features_metrics ||
-    data.metrics ||
-    {}
-  );
-}
-
-function displayBestModelSummary(data) {
-  return obj(data.display_best_model_summary || data.best_model_summary || {});
-}
-
-function displayLeakageReport(data) {
-  return obj(data.display_leakage_report || data.leakage_report || {});
+  return obj(data.best_model_summary?.final_metrics || data.best_model_summary?.all_features_metrics || data.metrics || {});
 }
 
 function normalizeModelRow(r) {
@@ -448,9 +292,9 @@ function healthChips(data) {
 function renderOverview(data) {
   const root = document.getElementById('content');
   const m = finalMetrics(data);
-  const bm = displayBestModelSummary(data);
+  const bm = obj(data.best_model_summary);
   const reg = obj(data.registry_summary);
-  const leak = displayLeakageReport(data);
+  const leak = obj(data.leakage_report);
   const drift = obj(data.monitoring_summary?.drift);
   const baseline = obj(data.monitoring_summary?.baseline);
   const modelRows = arr(data.model_comparison).map(normalizeModelRow);
@@ -463,31 +307,33 @@ function renderOverview(data) {
     { label: 'F1 Macro', value: Number(m.f1_macro || 0), display: fmt(m.f1_macro) },
     { label: 'ROC-AUC', value: Number(m.roc_auc || 0), display: fmt(m.roc_auc) },
   ];
+  const gapRows = modelRows.map(r => ({ model_name: r.model_name, gap: Number(r.gap || 0) }));
+  const gapMax = Math.max(...gapRows.map(r => r.gap), 0.1);
   const driftLabels = ['Baseline share', 'Current share'];
   const driftSeries = [{ name: 'Drift share', color: '#22d3ee', values: [Number(baseline.drift_share || 0), Number(drift.drift_share || 0)] }];
 
   root.innerHTML = baseShell('Executive Overview', 'A cleaner executive layout with the full KPI set organized across model performance, drift, leakage, DVC, MLflow, and repository readiness — all following the exact local repository structure.') +
   `<section class="grid kpis">
-    ${kpi('Final Model', bm.final_model_name || 'Not found', `Source: ${data.display_score_source || data.sources.best_model_summary}`, bm.final_model_name ? 'good' : 'warn')}
+    ${kpi('Final Model', bm.final_model_name || 'Not found', `Source: ${data.sources.best_model_summary}`, bm.final_model_name ? 'good' : 'warn')}
     ${kpi('Final Choice', bm.final_model_choice || '-', bm.final_reason || 'No final choice found', 'info')}
     ${kpi('F1 Macro', fmt(m.f1_macro), 'Primary model metric', m.f1_macro ? 'good' : 'warn')}
     ${kpi('Accuracy', fmt(m.accuracy), 'Final/test metric', m.accuracy ? 'good' : 'warn')}
     ${kpi('Precision', fmt(m.precision_macro), 'Macro precision', m.precision_macro ? 'good' : 'warn')}
     ${kpi('Recall', fmt(m.recall_macro), 'Macro recall', m.recall_macro ? 'good' : 'warn')}
     ${kpi('ROC-AUC', fmt(m.roc_auc), 'Probability separation', m.roc_auc ? 'good' : 'warn')}
-    ${kpi('Leakage Check', leak.status || 'PASS', 'No leakage issue found', (leak.status || 'PASS') === 'PASS' ? 'good' : 'warn')}
+    ${kpi('Leakage Check', leak.status || 'Not found', 'Automated leakage diagnostics', leak.status === 'PASS' ? 'good' : 'warn')}
     ${kpi('Drift Share', fmt(drift.drift_share), `${drift.drifted_feature_count ?? '-'} / ${drift.total_feature_count ?? '-'} features drifted`, drift.drift_detected ? 'warn' : 'good')}
     ${kpi('MLflow Version', reg.registered_model_version || '-', reg.registered_model_name || 'Registry summary', reg.registered_model_version ? 'good' : 'warn')}
     ${kpi('DVC Repro', data.dvc_results?.dvc_repro_success ? 'Success' : 'Unknown', 'train / hpo / register pipeline', data.dvc_results?.dvc_repro_success ? 'good' : 'warn')}
-    ${kpi('Model Artifacts', data.model_generation?.live_prediction_ready ? 'Available' : 'DVC required', data.model_generation?.live_prediction_ready ? 'model artifacts found locally' : 'models are DVC outputs, not repo files', data.model_generation?.live_prediction_ready ? 'good' : 'warn')}
+    ${kpi('Batch Ready', data.batch_ready ? 'Ready' : 'Blocked', data.batch_ready ? 'model + test data found' : 'needs model + test data', data.batch_ready ? 'good' : 'warn')}
   </section>
   <section class="grid two-even">
-    <div class="card"><h3>Performance Scorecard</h3><p class="sub">Final evaluation metrics from the verified training notebook.</p>${progressList(perfItems)}</div>
+    <div class="card"><h3>Performance Scorecard</h3><p class="sub">Final evaluation metrics used in the project decision.</p>${progressList(perfItems)}</div>
     <div class="card"><h3>Repository and Output Health</h3><p class="sub">Whether the dashboard found the required outputs directly or from the notebook fallback.</p>${healthChips(data)}</div>
   </section>
   <section class="grid two-even">
-    <div class="card"><h3>Model Benchmark — F1 Macro</h3><p class="sub">Verified notebook model comparison.</p>${bars(modelRows, 'model_name', 'f1_macro', 1)}</div>
-    <div class="card"><h3>Model Ranking Table</h3><p class="sub">Final accepted model comparison. Diagnostic gap views were removed.</p>${table(['Model', 'F1 macro', 'Status'], modelRows.map(r => [r.model_name, fmt(r.f1_macro), badge('verified', 'good')]))}</div>
+    <div class="card"><h3>Model Benchmark — F1 Macro</h3>${bars(modelRows, 'model_name', 'f1_macro', 1)}</div>
+    <div class="card"><h3>Train–Test Gap by Model</h3><p class="sub">Lower is better. This helps spot possible overfitting.</p>${bars(gapRows, 'model_name', 'gap', gapMax, true)}</div>
   </section>
   <section class="grid three">
     <div class="card"><h3>Feature Importance Snapshot</h3><p class="sub">Top-ranked features from permutation importance.</p>${bars(featureRows.slice(0, 5).map(r => ({ feature: r.feature, importance_mean: Number(r.importance_mean || 0) })), 'feature', 'importance_mean', Math.max(...featureRows.map(r => Number(r.importance_mean || 0)), 0.01))}</div>
@@ -500,277 +346,24 @@ function renderOverview(data) {
   </section>`;
 }
 
-
-function renderPredict(data) {
-  const mg = obj(data.model_generation);
-  document.getElementById('content').innerHTML = baseShell('Validated Prediction Form', 'This page uses the real DVC-generated model artifacts only. If the artifacts are not present locally, the page shows exactly what DVC needs to produce before live prediction can run.') +
-  `<section class="grid kpis" id="predict-kpis">
-    ${kpi('Model artifacts', mg.live_prediction_ready ? 'Available' : 'Missing', 'DVC-generated, not committed repo files', mg.live_prediction_ready ? 'good' : 'warn')}
-    ${kpi('Input mode', 'Raw customer', 'Uses Telco customer fields before preprocessing', 'info')}
-    ${kpi('Endpoint', '/api/predict', 'Runs only after model artifacts exist', 'info')}
-    ${kpi('Missing artifacts', fmtInt(arr(mg.missing_required).length), 'Required for live prediction', arr(mg.missing_required).length ? 'warn' : 'good')}
-  </section>
-  <section class="grid two-even">
-    <div class="card">
-      <h3>Model Artifact Status</h3>
-      ${dvcEnvironmentCallout(data.dvc_environment)}
-      <div style="height:12px"></div>
-      ${modelMissingCallout(mg)}
-      <p class="sub" style="margin-top:14px">Use the DVC controls below to restore/generate the actual artifacts. The dashboard does not assume that model binaries are already in the repository.</p>
-      ${dvcActionPanel(false)}
-    </div>
-    <div class="card">
-      <h3>Required Artifacts for Live Prediction</h3>
-      ${table(['Artifact', 'Stage', 'Status'], arr(mg.required_for_prediction).map(item => [`<code>${item.path}</code>`, item.stage || '-', item.exists ? badge('present', 'good') : badge('missing', 'warn')]))}
-    </div>
-  </section>
-  <section class="grid two-even">
-    <div class="card">
-      <h3>Customer Prediction Input</h3>
-      <p class="sub">The form remains visible for interface validation, but the Run Prediction button is disabled until the DVC-generated model and preprocessing artifacts exist.</p>
-      <div id="predictionSchemaNote" class="callout">Loading schema...</div>
-      <div id="predictionArtifacts" style="display:none"></div>
-      <form id="predictionForm" class="form-grid" style="margin-top:14px"></form>
-      <div class="controls" style="margin-top:14px">
-        <button class="control button" id="predictButton" type="button" ${mg.live_prediction_ready ? '' : 'disabled'}>Run Prediction</button>
-        <button class="control button" id="sampleButton" type="button">Load Sample Values</button>
-        <button class="control button" id="clearPredictionButton" type="button">Clear</button>
-      </div>
-      <div id="predictionErrors" class="json" style="margin-top:14px;display:${mg.live_prediction_ready ? 'none' : 'block'}">${mg.live_prediction_ready ? '' : 'Live prediction is disabled until DVC produces the required model artifacts.'}</div>
-    </div>
-    <div class="card">
-      <h3>Prediction Result</h3>
-      <p class="sub">The API response will appear here after the saved model exists and inference runs.</p>
-      <div id="predictionResult" class="json">${mg.live_prediction_ready ? 'No prediction yet.' : 'No model artifacts found. Run DVC Pull/Repro first.'}</div>
-    </div>
-  </section>
-  <section class="grid two-even">
-    <div class="card"><h3>Interpretation Panel</h3><div id="predictionExplanation" class="callout">${mg.live_prediction_ready ? 'Run a prediction to show churn probability, confidence, latency, and interpreted class.' : 'Prediction is not available yet because the model is a DVC output and is currently missing from the local workspace.'}</div></div>
-    <div class="card"><h3>Recent Prediction History</h3><div id="predictionHistory" class="json">Loading...</div></div>
-  </section>`;
-  setTimeout(() => { bindPredict(); bindDvcActionPanel(document); }, 50);
-}
-
-
-async function loadPredictionSchema() {
-  const res = await fetch('/api/predict/schema', { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to load prediction schema.');
-  return await res.json();
-}
-
-async function loadPredictionHistory() {
-  const res = await fetch('/api/predict/history', { cache: 'no-store' });
-  return res.ok ? await res.json() : [];
-}
-
-function escapeAttr(value) {
-  return String(value).replace(/"/g, '&quot;');
-}
-
-function findPredictionInput(form, name) {
-  return Array.from(form.querySelectorAll('.prediction-input')).find(input => input.name === name);
-}
-
-function renderPredictionField(field) {
-  const label = field.name;
-  const help = field.help || '';
-
-  if (field.type === 'select') {
-    const opts = (field.choices || []).map(choice => `<option value="${escapeAttr(choice)}" ${String(choice) === String(field.default) ? 'selected' : ''}>${choice}</option>`).join('');
-    return `<label class="field-card"><span>${label}</span><select class="control prediction-input" name="${escapeAttr(label)}" required>${opts}</select><small>${help}</small></label>`;
-  }
-
-  const min = field.min !== undefined ? `min="${field.min}"` : '';
-  const step = field.step ? `step="${field.step}"` : 'step="any"';
-  const value = field.default !== undefined ? `value="${Number(field.default).toFixed(2)}"` : 'value="0"';
-
-  return `<label class="field-card"><span>${label}</span><input class="control prediction-input" name="${escapeAttr(label)}" type="number" ${step} ${min} ${value} required><small>${help}</small></label>`;
-}
-
-function renderArtifactStatus(requiredArtifacts) {
-  const rows = Object.entries(requiredArtifacts || {}).map(([key, info]) => [
-    key,
-    `<code>${info.path || '-'}</code>`,
-    badge(info.exists ? 'found' : 'missing', info.exists ? 'good' : 'warn'),
-  ]);
-  return table(['Artifact', 'Path', 'Status'], rows);
-}
-
-async function bindPredict() {
-  const form = document.getElementById('predictionForm');
-  const note = document.getElementById('predictionSchemaNote');
-  const resultBox = document.getElementById('predictionResult');
-  const errorBox = document.getElementById('predictionErrors');
-  const explanation = document.getElementById('predictionExplanation');
-  const historyBox = document.getElementById('predictionHistory');
-  const artifactBox = document.getElementById('predictionArtifacts');
-  const kpiWrap = document.getElementById('predict-kpis');
-
-  let schema = {};
-  try {
-    schema = await loadPredictionSchema();
-  } catch (error) {
-    if (resultBox) resultBox.textContent = safeJson({ ok: false, error: 'Failed to load prediction schema', detail: String(error) });
-    if (errorBox) {
-      errorBox.style.display = 'block';
-      errorBox.textContent = String(error);
-    }
-    return;
-  }
-
-  form.innerHTML = (schema.fields || []).map(renderPredictionField).join('');
-  note.innerHTML = `<strong>Schema source:</strong> ${schema.source}<br><strong>Live prediction ready:</strong> ${schema.live_prediction_ready ? 'Yes' : 'No'}<br>${schema.note || ''}`;
-  if (artifactBox) {
-    artifactBox.innerHTML = renderArtifactStatus(schema.required_artifacts || {});
-  }
-
-  kpiWrap.innerHTML = `
-    ${kpi('Model artifact', schema.live_prediction_ready ? 'Ready' : 'Missing', 'best model + preprocessing artifacts', schema.live_prediction_ready ? 'good' : 'warn')}
-    ${kpi('Input mode', 'Raw customer', 'Validated raw Telco fields', 'info')}
-    ${kpi('Fields', fmtInt((schema.fields || []).length), schema.source, 'info')}
-    ${kpi('Endpoint', schema.endpoint || '/api/predict', 'POST prediction route', 'info')}
-  `;
-
-  async function refreshHistory() {
-    const history = await loadPredictionHistory();
-    historyBox.textContent = safeJson(history.slice(-10).reverse());
-  }
-
-  await refreshHistory();
-
-  const sampleButton = document.getElementById('sampleButton');
-  const clearButton = document.getElementById('clearPredictionButton');
-  const predictButton = document.getElementById('predictButton');
-
-  if (sampleButton) {
-    sampleButton.onclick = () => {
-      (schema.fields || []).forEach(field => {
-        const input = findPredictionInput(form, field.name);
-        if (!input) return;
-
-        if (field.type === 'select') {
-          input.value = field.default ?? (field.choices || [])[0] ?? '';
-        } else {
-          input.value = field.default !== undefined ? Number(field.default).toFixed(2) : 0;
-        }
-      });
-
-      if (errorBox) {
-        errorBox.style.display = 'none';
-        errorBox.textContent = '';
-      }
-
-      if (resultBox) {
-        resultBox.textContent = 'Sample values loaded. Click Run Prediction.';
-      }
-    };
-  }
-
-  if (clearButton) {
-    clearButton.onclick = () => {
-      if (resultBox) resultBox.textContent = 'No prediction yet.';
-      if (explanation) explanation.textContent = 'Run a prediction to show churn probability, confidence, latency, and interpreted class.';
-      if (errorBox) {
-        errorBox.style.display = 'none';
-        errorBox.textContent = '';
-      }
-    };
-  }
-
-  if (predictButton) {
-    predictButton.onclick = async () => {
-      if (predictButton.disabled) {
-        if (errorBox) {
-          errorBox.style.display = 'block';
-          errorBox.textContent = 'Live prediction is disabled because required model artifacts are missing or not ready.';
-        }
-        return;
-      }
-
-      if (errorBox) {
-        errorBox.style.display = 'none';
-        errorBox.textContent = '';
-      }
-
-      const payload = {};
-      form.querySelectorAll('.prediction-input').forEach(input => {
-        payload[input.name] = input.value;
-      });
-
-      if (resultBox) resultBox.textContent = 'Running prediction...';
-
-      let output = {};
-      let res = null;
-
-      try {
-        res = await fetch('/api/predict', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        output = await res.json();
-      } catch (error) {
-        output = {
-          ok: false,
-          error: 'The prediction request could not reach /api/predict.',
-          detail: String(error),
-        };
-      }
-
-      if (resultBox) resultBox.textContent = safeJson(output);
-
-      if (!res || !res.ok || !output.ok) {
-        if (errorBox) {
-          errorBox.style.display = 'block';
-          errorBox.textContent = safeJson(output.validation_errors || output);
-        }
-        if (explanation) {
-          explanation.innerHTML = `<strong>Prediction did not run.</strong><br>${output.error || 'Check validation errors.'}<br>${output.note || output.detail || ''}`;
-        }
-        return;
-      }
-
-      const probability = output.churn_probability !== null && output.churn_probability !== undefined ? pct(output.churn_probability, 1) : '-';
-      const confidence = output.confidence !== null && output.confidence !== undefined ? pct(output.confidence, 1) : '-';
-
-      if (explanation) {
-        explanation.innerHTML = `
-          <strong>Predicted churn:</strong> ${output.churn}<br>
-          <strong>Raw prediction:</strong> ${output.prediction}<br>
-          <strong>Churn probability:</strong> ${probability}<br>
-          <strong>Confidence:</strong> ${confidence}<br>
-          <strong>Latency:</strong> ${fmt(output.latency_ms, 2)} ms<br>
-          <strong>Feature shape:</strong> ${output.feature_shape?.join(' × ') || '-'}
-        `;
-      }
-
-      await refreshHistory();
-    };
-  }
-}
-
-
 function renderMonitoring(data) {
   const root = document.getElementById('content');
   const drift = obj(data.monitoring_summary?.drift);
-  root.innerHTML = baseShell('Batch Monitoring', 'Monitor batch scoring only after DVC has restored or generated the model artifacts. If no models are present locally, use the DVC controls on this page to pull/reproduce them.') +
+  root.innerHTML = baseShell('Batch Monitoring', 'Monitor local scoring batches, live batch KPIs, confidence, latency, and monitoring updates. This page keeps the runner separated from drift and model analysis for clearer organization.') +
   `<section class="grid kpis" id="monitoring-kpis"></section>
    <section class="grid two-even">
-     <div class="card"><h3>Batch Runner</h3>${dvcEnvironmentCallout(data.dvc_environment)}<div style="height:12px"></div>${modelMissingCallout(data.model_generation)}<p class="sub">Uses DVC-generated artifacts only: <span class="mono">models/best_model.pkl</span> plus <span class="mono">data/splits/production.csv</span> when available, otherwise <span class="mono">data/splits/test.csv</span>. If these are missing, run DVC Pull or Repro from the panel below.</p><div class="controls"><input class="control" id="batchSize" type="number" value="50" min="1"><button class="control button" id="runBatch">Run Next Batch</button><button class="control button" id="runMonitoring">Run Monitoring Script</button></div><div id="batchMsg" class="json" style="margin-top:14px">Waiting...</div></div>
-     <div class="card"><h3>Monitoring Summary Snapshot</h3><p class="sub">Directly from monitoring/evidently_reports/monitoring_summary.json. These are drift/monitoring values, not model accuracy metrics.</p>${monitoringSummaryBoxes(data.monitoring_summary)}</div>
+     <div class="card"><h3>Batch Runner</h3><p class="sub">Required files: <span class="mono">models/best_model.pkl</span> and <span class="mono">data/splits/test.csv</span>. The dashboard will not invent any missing production dataset.</p><div class="controls"><input class="control" id="batchSize" type="number" value="50" min="1"><button class="control button" id="runBatch">Run Next Batch</button><button class="control button" id="runMonitoring">Run Monitoring Script</button></div><div id="batchMsg" class="json" style="margin-top:14px">Waiting...</div></div>
+     <div class="card"><h3>Monitoring Summary Snapshot</h3><p class="sub">Directly from monitoring/evidently_reports/monitoring_summary.json.</p>${metricBoxes({ accuracy: drift.drift_share, precision_macro: drift.threshold, recall_macro: drift.drifted_feature_count, f1_macro: drift.total_feature_count, roc_auc: arr(data.drift_alerts).length, problem_type: drift.drift_detected ? 'drift detected' : 'stable' })}</div>
    </section>
    <section class="grid two-even">
      <div id="batchTrendCard" class="card"><h3>Batch Trend</h3><div class="json">Loading batch history...</div></div>
      <div id="batchMixCard" class="card"><h3>Latest Batch Mix</h3><div class="json">Loading batch history...</div></div>
    </section>
    <section class="grid two-even">
-     <div class="card"><h3>DVC Recovery Controls</h3><p class="sub">If the runner says artifacts are missing, restore them from the working DVC setup here.</p>${dvcActionPanel(true)}</div>
      <div class="card"><h3>Current Requirements</h3>${availabilityTable(data)}</div>
-   </section>
-   <section class="grid two-even">
      <div id="batchHistoryTable" class="card"><h3>Batch History Table</h3><div class="json">Loading batch history...</div></div>
    </section>`;
-  setTimeout(() => { bindMonitoring(data); bindDvcActionPanel(document); }, 50);
+  setTimeout(() => bindMonitoring(data), 50);
 }
 
 async function bindMonitoring(data) {
@@ -825,7 +418,7 @@ function renderMonitoringHistory(history, trendCard, mixCard, histTable, kpiWrap
     kpi('Latest Positive Rate', last ? pct(latestPosRate, 1) : '-', 'Positive predictions / batch rows', last ? 'info' : 'warn'),
     kpi('Current Drift Share', fmt(data.monitoring_summary?.drift?.drift_share), 'From monitoring summary', data.monitoring_summary?.drift?.drift_detected ? 'warn' : 'good'),
     kpi('Alert Count', fmtInt(arr(data.drift_alerts).length), 'drift_alerts.log entries', arr(data.drift_alerts).length ? 'warn' : 'good'),
-    kpi('Runner Ready', data.batch_ready ? 'Yes' : 'DVC needed', data.batch_ready ? 'Model and data artifacts found' : 'Model/data artifacts are DVC outputs', data.batch_ready ? 'good' : 'warn'),
+    kpi('Runner Ready', data.batch_ready ? 'Yes' : 'No', data.batch_ready ? 'Model and test set found' : 'Missing model or test set', data.batch_ready ? 'good' : 'warn'),
     kpi('Latest Offset', fmtInt(last?.offset), 'Resume position in test set', last ? 'info' : 'warn'),
     kpi('Latest Timestamp', last ? new Date(last.timestamp * 1000).toLocaleString() : '-', 'Most recent batch event', last ? 'good' : 'warn'),
     kpi('True Labels', last?.y_true_available ? 'Available' : 'Unknown', 'Whether the batch contained labels', last?.y_true_available ? 'good' : 'warn'),
@@ -881,34 +474,34 @@ function renderDrift(data) {
 
 function renderModels(data) {
   const rows = arr(data.model_comparison).map(normalizeModelRow);
-  const bm = displayBestModelSummary(data);
+  const bm = obj(data.best_model_summary);
   const hpo = obj(data.hpo_summary);
-  const finalM = obj(bm.final_metrics || bm.all_features_metrics || data.display_metrics || {});
-  const allM = obj(bm.all_features_metrics || finalM);
-  const selM = obj(bm.selected_features_metrics || finalM);
-
-  document.getElementById('content').innerHTML = baseShell('Model Comparison', 'Model comparison is based on the verified final training notebook results and focuses only on accepted performance metrics and final selection.') +
+  const finalM = obj(bm.final_metrics || {});
+  const allM = obj(bm.all_features_metrics || {});
+  const selM = obj(bm.selected_features_metrics || {});
+  const gapMax = Math.max(...rows.map(r => Number(r.gap || 0)), 0.1);
+  document.getElementById('content').innerHTML = baseShell('Model Comparison', 'Training outputs and HPO are now organized on their own page with separate benchmark, gap, and decision sections.') +
   `<section class="grid kpis">
-    ${kpi('Final model', bm.final_model_name || '-', 'verified notebook reference', bm.final_model_name ? 'good' : 'warn')}
+    ${kpi('Final model', bm.final_model_name || '-', data.sources.best_model_summary, bm.final_model_name ? 'good' : 'warn')}
     ${kpi('Final choice', bm.final_model_choice || '-', bm.final_reason || 'Decision note', 'info')}
-    ${kpi('Final F1', fmt(bm.final_score || finalM.f1_macro), 'Final selected score', 'good')}
-    ${kpi('All-features F1', fmt(bm.all_features_score || allM.f1_macro), 'Full-feature benchmark', 'good')}
-    ${kpi('Selected-features F1', fmt(bm.selected_features_score || selM.f1_macro), 'Feature-subset benchmark', 'good')}
-    ${kpi('HPO best', hpo.best_hpo_model_name || hpo.bestSummary?.model_name || 'catboost', 'Verified HPO result', 'good')}
-    ${kpi('Notebook source', 'Verified', 'Training notebook metrics used for display', 'good')}
-    ${kpi('Leakage check', 'PASS', 'No leakage issue found', 'good')}
+    ${kpi('Final F1', fmt(bm.final_score || finalM.f1_macro), 'Chosen final score', 'good')}
+    ${kpi('All-features F1', fmt(bm.all_features_score), 'Full-feature benchmark', 'good')}
+    ${kpi('Selected-features F1', fmt(bm.selected_features_score), 'Feature-subset benchmark', 'good')}
+    ${kpi('HPO best', hpo.best_hpo_model_name || hpo.bestSummary?.model_name || '-', data.sources.hpo_summary, hpo.best_hpo_model_name || hpo.bestSummary?.model_name ? 'good' : 'warn')}
+    ${kpi('HPO score', fmt(hpo.best_score), 'Best tuning score', hpo.best_score ? 'good' : 'warn')}
+    ${kpi('Registered run', data.registry_summary?.registered_run_id || '-', 'MLflow registered run ID', data.registry_summary?.registered_run_id ? 'good' : 'warn')}
   </section>
   <section class="grid two-even">
-    <div class="card"><h3>F1 Macro by Model</h3><p class="sub">Verified notebook model comparison using the accepted final training results.</p>${bars(rows, 'model_name', 'f1_macro', 1)}</div>
-    <div class="card"><h3>Model Ranking Table</h3>${table(['Model', 'F1 macro', 'Verdict'], rows.map(r => [r.model_name, fmt(r.f1_macro), badge('verified', 'good')]))}</div>
+    <div class="card"><h3>F1 Macro by Model</h3>${bars(rows, 'model_name', 'f1_macro', 1)}</div>
+    <div class="card"><h3>Train–Test Gap by Model</h3><p class="sub">A compact overfitting view from the diagnostics output.</p>${bars(rows.map(r => ({ model_name: r.model_name, gap: r.gap })), 'model_name', 'gap', gapMax, true)}</div>
   </section>
   <section class="grid two-even">
-    <div class="card"><h3>Core Metrics Comparison</h3><p class="sub">Grouped comparison of the final, all-feature, and selected-feature configurations.</p>${modelMetricComparisonChart(finalM, allM, selM)}</div>
-    <div class="card"><h3>Metric Profile Line Chart</h3><p class="sub">Profile of the key metrics for each accepted model configuration.</p>${modelMetricLineChart(finalM, allM, selM)}</div>
+    <div class="card"><h3>Core Metrics Comparison</h3><p class="sub">This replaces the previous metric cards with a grouped bar chart across the final model, all-feature model, and selected-feature model.</p>${modelMetricComparisonChart(finalM, allM, selM)}</div>
+    <div class="card"><h3>Metric Profile Line Chart</h3><p class="sub">A line-chart view makes it easier to compare the stability of each model configuration across all key metrics.</p>${modelMetricLineChart(finalM, allM, selM)}</div>
   </section>
-  <section class="card"><h3>Metric Difference Table</h3><p class="sub">Feature-selection result compared against the all-feature model.</p>${modelMetricDeltaTable(finalM, allM, selM)}</section>
+  <section class="card"><h3>Metric Difference Table</h3><p class="sub">Selected-feature and final-model differences are compared against the all-feature model. This supports the final decision to keep feature importance as analysis only.</p>${modelMetricDeltaTable(finalM, allM, selM)}</section>
   <section class="grid two-even">
-    <div class="card"><h3>Final Model Decision</h3><div class="callout"><strong>${bm.final_model_name || 'Final model'}</strong><br>${bm.final_reason || 'The all-feature model remains the final model because selected features did not outperform it.'}</div><div style="margin-top:12px">${badge('notebook verified', 'good')}${badge(`run id: ${shortText(bm.final_run_id || '-', 18)}`, 'info')}</div></div>
+    <div class="card"><h3>Model Diagnostics Table</h3>${table(['Model', 'F1 macro', 'Gap', 'Verdict'], rows.map(r => [r.model_name, fmt(r.f1_macro), fmt(r.gap), badge(r.verdict || '-', r.verdict === 'GOOD' ? 'good' : 'warn')]))}</div>
     <div class="card"><h3>Best Model Summary</h3><div class="json">${safeJson(bm)}</div></div>
   </section>`;
 }
@@ -949,88 +542,52 @@ function renderDvc(data) {
   const stages = (arr(yaml.stages).length ? arr(yaml.stages) : arr(lock.stages));
   const dvc = obj(data.dvc_results);
   const stageResults = obj(dvc.stage_results);
-  const workspace = obj(data.dvc_workspace);
-  const env = obj(data.dvc_environment);
-  const readiness = workspace.total_outputs ? `${workspace.present_outputs}/${workspace.total_outputs}` : '-';
-
-  document.getElementById('content').innerHTML = baseShell('DVC Pipeline', 'This page is now the control center for the working DVC setup. It reads dvc.yaml, dvc.lock, and params.yaml directly, shows exactly which DVC artifacts exist locally, and can run DVC pull/repro commands from the dashboard.') +
+  document.getElementById('content').innerHTML = baseShell('DVC Pipeline', 'The DVC page now separates structure, execution, and lock-file health so it is easier to diagnose issues like duplicate stages or invalid lock content.') +
   `<section class="grid kpis">
     ${kpi('dvc.yaml', yaml.exists ? 'Found' : 'Missing', yaml.valid_yaml ? 'Valid YAML' : (yaml.error || '-'), yaml.exists ? 'good' : 'bad')}
     ${kpi('dvc.lock', lock.exists ? 'Found' : 'Missing', lock.valid_yaml ? 'Valid YAML' : (lock.parse_error || 'Parsed as text'), lock.exists ? 'good' : 'bad')}
     ${kpi('Duplicate stages', fmtInt(duplicate.length), duplicate.join(', ') || 'none', duplicate.length ? 'warn' : 'good')}
     ${kpi('Stage count', fmtInt(stages.length), 'Stages parsed from dvc.yaml / dvc.lock', 'info')}
-    ${kpi('DVC artifacts', readiness, 'present / total tracked outputs', workspace.missing_outputs ? 'warn' : 'good')}
-    ${kpi('Missing outputs', fmtInt(workspace.missing_outputs), 'DVC outputs not present locally', workspace.missing_outputs ? 'warn' : 'good')}
-    ${kpi('DVC metrics', dvc.dvc_metrics_success ? 'Success' : 'Use button', 'Run dvc metrics show from this page', dvc.dvc_metrics_success ? 'good' : 'info')}
-    ${kpi('Registry summary', data.availability?.registry_summary?.exists ? 'Found' : 'Missing', 'reports/model_registry_summary.json', data.availability?.registry_summary?.exists ? 'good' : 'warn')}
-    ${kpi('DVC-S3', env.dvc_s3_available ? 'Installed' : 'Missing', env.s3_remote_detected ? 'S3 remote detected' : 'No S3 remote detected', env.dvc_s3_available || !env.s3_remote_detected ? 'good' : 'warn')}
-  </section>
-  <section class="grid two-even">
-    <div class="card"><h3>DVC Environment</h3>${dvcEnvironmentCallout(env)}<div class="json" style="margin-top:12px">${safeJson(env)}</div></div>
-    <div class="card"><h3>DVC Operations</h3><p class="sub">Use these controls only in your local workspace. The commands run from the repository root using the same Python executable that launched this dashboard.</p>${dvcActionPanel(false)}</div>
-  </section>
-  <section class="grid two-even">
-    <div class="card"><h3>Configured Pipeline Stages</h3>${table(['Stage', 'Command', 'Outputs'], stages.map(s => [s.name || '-', `<code>${s.cmd || '-'}</code>`, arr(s.outs).slice(0, 8).join('<br>') || '-']))}</div>
-  </section>
-  <section class="grid two-even">
-    <div class="card"><h3>Exact DVC Artifact Availability</h3><p class="sub">This table is built from dvc.yaml and dvc.lock. It is not a guessed folder list.</p>${dvcArtifactTable(workspace)}</div>
-    <div class="card"><h3>Configured Paths from params.yaml</h3>${table(['Config key', 'Path', 'Local status'], Object.entries(obj(data.configured_paths)).map(([key, path]) => {
-      const existsNow = path && data.availability?.[`params_data_${key.replace('params_data_', '')}`]?.exists;
-      return [key, `<code>${path}</code>`, existsNow ? badge('present', 'good') : badge('tracked / generated by DVC', 'info')];
-    }))}</div>
+    ${kpi('DVC repro', dvc.dvc_repro_success ? 'Success' : 'Unknown', 'Recorded DVC pipeline reproduction result', dvc.dvc_repro_success ? 'good' : 'warn')}
+    ${kpi('DVC metrics', dvc.dvc_metrics_success ? 'Success' : 'Unknown', 'Recorded dvc metrics show result', dvc.dvc_metrics_success ? 'good' : 'warn')}
+    ${kpi('Lock created', dvc.dvc_lock_created ? 'Yes' : 'No', 'Whether dvc.lock was generated', dvc.dvc_lock_created ? 'good' : 'warn')}
+    ${kpi('Registry summary', dvc.model_registry_summary_created ? 'Created' : 'Unknown', 'Whether register stage produced summary', dvc.model_registry_summary_created ? 'good' : 'warn')}
   </section>
   <section class="grid two-even">
     <div class="card"><h3>Recorded Stage Execution</h3>${stageSteps(stageResults)}</div>
-    <div class="card"><h3>DVC Workspace Summary</h3><div class="json">${safeJson(workspace)}</div></div>
+    <div class="card"><h3>Configured Pipeline Stages</h3>${table(['Stage', 'Command', 'Outputs'], stages.map(s => [s.name || '-', `<code>${s.cmd || '-'}</code>`, arr(s.outs).slice(0, 6).join('<br>') || '-']))}</div>
+  </section>
+  <section class="grid two-even">
+    <div class="card"><h3>DVC Lock Parse</h3><div class="json">${safeJson(lock)}</div></div>
+    <div class="card"><h3>DVC Results Summary</h3><div class="json">${safeJson(dvc)}</div></div>
   </section>`;
-  setTimeout(() => bindDvcActionPanel(document), 50);
 }
 
 function renderRegistry(data) {
   const r = obj(data.registry_summary);
   const bm = obj(data.best_model_summary);
-  const mlflow = obj(data.mlflow_status);
-
-  document.getElementById('content').innerHTML = baseShell('MLflow Registry', 'Registry, lineage, and MLflow UI access are managed here. This page reads the registry summary and can start the MLflow UI from the local backend database.') +
+  document.getElementById('content').innerHTML = baseShell('MLflow Registry', 'Registry and lineage details are now isolated so versioning is easier to read and present.') +
   `<section class="grid kpis">
     ${kpi('Registered model', r.registered_model_name || '-', data.sources.registry_summary, r.registered_model_name ? 'good' : 'warn')}
     ${kpi('Version', r.registered_model_version || '-', 'MLflow model version', r.registered_model_version ? 'good' : 'warn')}
     ${kpi('Metric', r.metric_name || '-', fmt(r.metric_value), r.metric_value ? 'good' : 'warn')}
     ${kpi('Run ID', r.registered_run_id || '-', 'Registered run identifier', r.registered_run_id ? 'good' : 'warn')}
-    ${kpi('MLflow runs', fmtInt(mlflow.run_count), 'Runs found in mlruns/mlflow.db', mlflow.multiple_runs ? 'good' : 'warn')}
-    ${kpi('Experiments', fmtInt(mlflow.experiment_count), 'MLflow experiments found', mlflow.available ? 'good' : 'warn')}
+    ${kpi('Model from run', r.model_name_from_run || '-', 'Model artifact name', r.model_name_from_run ? 'good' : 'warn')}
+    ${kpi('Stage from run', r.model_stage_from_run || '-', 'Logical stage / alias', r.model_stage_from_run ? 'good' : 'warn')}
     ${kpi('Final model choice', r.final_model_choice || bm.final_model_choice || '-', 'Final project decision', 'info')}
     ${kpi('Feature analysis', r.feature_importance_kept_as_analysis ? 'Analysis only' : 'Used in final model', 'Feature importance contribution', r.feature_importance_kept_as_analysis ? 'warn' : 'good')}
   </section>
   <section class="grid two-even">
-    <div class="card"><h3>MLflow UI Controls</h3><p class="sub">Start the MLflow UI from the same local backend database, then open it in the browser to show experiment runs and registered model versions.</p><div class="controls"><button class="control button" id="startMlflowBtn" type="button">Start MLflow UI</button><a class="control button" href="http://127.0.0.1:5000" target="_blank">Open MLflow UI</a></div><div id="mlflow-start-result" class="json" style="margin-top:14px">${safeJson(mlflow)}</div></div>
     <div class="card"><h3>Registry Lineage</h3><div class="kpi-cluster">
       <div class="kpi-chip"><span>Registered model</span><strong>${r.registered_model_name || '-'}</strong><span>Registry object name</span></div>
       <div class="kpi-chip"><span>Version</span><strong>${r.registered_model_version || '-'}</strong><span>Recorded version number</span></div>
       <div class="kpi-chip"><span>Run ID</span><strong>${shortText(r.registered_run_id || '-', 18)}</strong><span>MLflow run used for registration</span></div>
       <div class="kpi-chip"><span>Metric value</span><strong>${fmt(r.metric_value)}</strong><span>${r.metric_name || 'metric'}</span></div>
     </div></div>
-  </section>
-  <section class="grid two-even">
     <div class="card"><h3>Selected Features Recorded in Registry</h3>${chips(r.selected_features_analysis || bm.selected_features_analysis || [], 'info')}<div style="margin-top:12px"><h4>Top reference features</h4>${chips(r.top_10_reference_features || bm.top_10_reference_features || [], 'good')}</div></div>
-    <div class="card"><h3>Registry Summary JSON</h3><div class="json">${safeJson(r)}</div></div>
-  </section>`;
-  setTimeout(bindRegistryControls, 50);
+  </section>
+  <section class="card"><h3>Registry Summary JSON</h3><div class="json">${safeJson(r)}</div></section>`;
 }
-
-function bindRegistryControls() {
-  const button = document.getElementById('startMlflowBtn');
-  const box = document.getElementById('mlflow-start-result');
-  if (!button || !box) return;
-
-  button.onclick = async () => {
-    box.textContent = 'Starting MLflow UI...';
-    const res = await fetch('/api/mlflow/start', { method: 'POST' });
-    const payload = await res.json();
-    box.textContent = safeJson(payload);
-  };
-}
-
 
 function renderReports(data) {
   const rows = Object.entries(obj(data.availability)).map(([k, v]) => [k, `<code>${v.path}</code>`, badge(v.exists ? 'exists' : 'missing', v.exists ? 'good' : 'bad'), v.size ?? '-', v.modified ? new Date(v.modified * 1000).toLocaleString() : '-']);

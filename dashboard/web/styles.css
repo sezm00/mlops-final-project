@@ -108,21 +108,3 @@ td:first-child,th:first-child{max-width:240px}
 
 .spark.tall{height:320px}
 @media(max-width:1200px){.spark.tall{height:280px}}
-
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.field-card{display:grid;gap:6px;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04)}
-.field-card span{font-size:13px;font-weight:800;color:#dbeafe;word-break:break-word}
-.field-card small{font-size:11px;color:#9fb0cc;line-height:1.35}
-.field-card .control{width:100%}
-@media(max-width:900px){.form-grid{grid-template-columns:1fr}}
-
-.dvc-actions{align-items:flex-start}
-.dvc-actions .button{margin-bottom:6px}
-
-.button[disabled]{opacity:.45;cursor:not-allowed}
-.danger-callout{border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.10);color:#fecdd3}
-.good-callout{border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.10);color:#bbf7d0}
-
-.warn-callout{border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.10);color:#fde68a}
-
-.metric-box .value.compact{font-size:18px;word-break:break-word}
