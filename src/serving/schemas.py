@@ -1,170 +1,117 @@
-from typing import List, Optional
+from typing import List, Optional, Literal
+from pydantic import BaseModel, Field, conint, confloat
 
-from pydantic import BaseModel, Field, field_validator
 
-# ── Raw customer input ────────────────────────────────────────────────────────
-
+# =========================
+# RAW CUSTOMER INPUT
+# =========================
 
 class CustomerInput(BaseModel):
     """
-    Raw customer record — exactly as it would appear before any preprocessing.
-    All fields match the original Telco dataset columns (minus customerID).
+    Raw Telco customer record (pre-processing stage).
+    Strictly validated for production safety.
     """
 
-    # Numeric
-    tenure: float = Field(
-        ..., ge=0, description="Months the customer has been with the company"
-    )
-    MonthlyCharges: float = Field(
-        ..., ge=0, description="Current monthly charge amount ($)"
-    )
-    TotalCharges: float = Field(
-        ..., ge=0, description="Total amount charged to date ($)"
-    )
+    # ── Numeric features ─────────────────────────────
 
-    # Demographics
-    gender: str = Field(..., description="'Male' or 'Female'")
-    SeniorCitizen: int = Field(
-        ..., ge=0, le=1, description="1 if senior citizen, 0 otherwise"
-    )
-    Partner: str = Field(..., description="'Yes' or 'No'")
-    Dependents: str = Field(..., description="'Yes' or 'No'")
-
-    # Phone service
-    PhoneService: str = Field(..., description="'Yes' or 'No'")
-    MultipleLines: str = Field(..., description="'Yes', 'No', or 'No phone service'")
-
-    # Internet service
-    InternetService: str = Field(..., description="'DSL', 'Fiber optic', or 'No'")
-    OnlineSecurity: str = Field(
-        ..., description="'Yes', 'No', or 'No internet service'"
-    )
-    OnlineBackup: str = Field(..., description="'Yes', 'No', or 'No internet service'")
-    DeviceProtection: str = Field(
-        ..., description="'Yes', 'No', or 'No internet service'"
-    )
-    TechSupport: str = Field(..., description="'Yes', 'No', or 'No internet service'")
-    StreamingTV: str = Field(..., description="'Yes', 'No', or 'No internet service'")
-    StreamingMovies: str = Field(
-        ..., description="'Yes', 'No', or 'No internet service'"
-    )
-
-    # Contract & billing
-    Contract: str = Field(
-        ..., description="'Month-to-month', 'One year', or 'Two year'"
-    )
-    PaperlessBilling: str = Field(..., description="'Yes' or 'No'")
-    PaymentMethod: str = Field(
+    tenure: conint(ge=0, le=100) = Field(
         ...,
-        description="'Electronic check', 'Mailed check', 'Bank transfer (automatic)', or 'Credit card (automatic)'",
+        description="Months the customer has been with the company (>= 0)",
     )
 
-    @field_validator("gender")
-    @classmethod
-    def validate_gender(cls, v):
-        if v not in ("Male", "Female"):
-            raise ValueError("gender must be 'Male' or 'Female'")
-        return v
-
-    @field_validator("Partner", "Dependents", "PhoneService", "PaperlessBilling")
-    @classmethod
-    def validate_yes_no(cls, v):
-        if v not in ("Yes", "No"):
-            raise ValueError("must be 'Yes' or 'No'")
-        return v
-
-    @field_validator("MultipleLines")
-    @classmethod
-    def validate_multiple_lines(cls, v):
-        if v not in ("Yes", "No", "No phone service"):
-            raise ValueError("MultipleLines must be 'Yes', 'No', or 'No phone service'")
-        return v
-
-    @field_validator("InternetService")
-    @classmethod
-    def validate_internet_service(cls, v):
-        if v not in ("DSL", "Fiber optic", "No"):
-            raise ValueError("InternetService must be 'DSL', 'Fiber optic', or 'No'")
-        return v
-
-    @field_validator(
-        "OnlineSecurity",
-        "OnlineBackup",
-        "DeviceProtection",
-        "TechSupport",
-        "StreamingTV",
-        "StreamingMovies",
+    MonthlyCharges: confloat(ge=0, le=1000) = Field(
+        ...,
+        description="Monthly charge amount in USD (must be >= 0)",
     )
-    @classmethod
-    def validate_internet_addon(cls, v):
-        if v not in ("Yes", "No", "No internet service"):
-            raise ValueError("must be 'Yes', 'No', or 'No internet service'")
-        return v
 
-    @field_validator("Contract")
-    @classmethod
-    def validate_contract(cls, v):
-        if v not in ("Month-to-month", "One year", "Two year"):
-            raise ValueError(
-                "Contract must be 'Month-to-month', 'One year', or 'Two year'"
-            )
-        return v
+    TotalCharges: confloat(ge=0) = Field(
+        ...,
+        description="Total charges accumulated (must be >= 0)",
+    )
 
-    @field_validator("PaymentMethod")
-    @classmethod
-    def validate_payment_method(cls, v):
-        valid = (
-            "Electronic check",
-            "Mailed check",
-            "Bank transfer (automatic)",
-            "Credit card (automatic)",
-        )
-        if v not in valid:
-            raise ValueError(f"PaymentMethod must be one of: {valid}")
-        return v
+    # ── Demographics ────────────────────────────────
 
-    model_config = {"extra": "ignore"}
+    gender: Literal["Male", "Female"]
 
+    SeniorCitizen: Literal[0, 1]
 
-# ── Request / Response ────────────────────────────────────────────────────────
+    Partner: Literal["Yes", "No"]
 
+    Dependents: Literal["Yes", "No"]
 
-class PredictRequest(BaseModel):
-    """Single prediction request."""
+    # ── Phone service ────────────────────────────────
 
-    customer: CustomerInput
+    PhoneService: Literal["Yes", "No"]
+
+    MultipleLines: Literal["Yes", "No", "No phone service"]
+
+    # ── Internet service ─────────────────────────────
+
+    InternetService: Literal["DSL", "Fiber optic", "No"]
+
+    OnlineSecurity: Literal["Yes", "No", "No internet service"]
+
+    OnlineBackup: Literal["Yes", "No", "No internet service"]
+
+    DeviceProtection: Literal["Yes", "No", "No internet service"]
+
+    TechSupport: Literal["Yes", "No", "No internet service"]
+
+    StreamingTV: Literal["Yes", "No", "No internet service"]
+
+    StreamingMovies: Literal["Yes", "No", "No internet service"]
+
+    # ── Contract & billing ───────────────────────────
+
+    Contract: Literal["Month-to-month", "One year", "Two year"]
+
+    PaperlessBilling: Literal["Yes", "No"]
+
+    PaymentMethod: Literal[
+        "Electronic check",
+        "Mailed check",
+        "Bank transfer (automatic)",
+        "Credit card (automatic)",
+    ]
 
     model_config = {
+        "extra": "ignore",
         "json_schema_extra": {
             "example": {
-                "customer": {
-                    "tenure": 24,
-                    "MonthlyCharges": 65.5,
-                    "TotalCharges": 1572.0,
-                    "gender": "Male",
-                    "SeniorCitizen": 0,
-                    "Partner": "Yes",
-                    "Dependents": "No",
-                    "PhoneService": "Yes",
-                    "MultipleLines": "No",
-                    "InternetService": "DSL",
-                    "OnlineSecurity": "Yes",
-                    "OnlineBackup": "Yes",
-                    "DeviceProtection": "No",
-                    "TechSupport": "Yes",
-                    "StreamingTV": "No",
-                    "StreamingMovies": "No",
-                    "Contract": "One year",
-                    "PaperlessBilling": "Yes",
-                    "PaymentMethod": "Credit card (automatic)",
-                }
+                "tenure": 24,
+                "MonthlyCharges": 65.5,
+                "TotalCharges": 1572.0,
+                "gender": "Male",
+                "SeniorCitizen": 0,
+                "Partner": "Yes",
+                "Dependents": "No",
+                "PhoneService": "Yes",
+                "MultipleLines": "No",
+                "InternetService": "DSL",
+                "OnlineSecurity": "Yes",
+                "OnlineBackup": "Yes",
+                "DeviceProtection": "No",
+                "TechSupport": "Yes",
+                "StreamingTV": "No",
+                "StreamingMovies": "No",
+                "Contract": "One year",
+                "PaperlessBilling": "Yes",
+                "PaymentMethod": "Credit card (automatic)",
             }
-        }
+        },
     }
 
 
+# =========================
+# REQUEST / RESPONSE
+# =========================
+
+class PredictRequest(BaseModel):
+    customer: CustomerInput
+
+
 class PredictResponse(BaseModel):
-    churn: str = Field(..., description="'Yes' if predicted to churn, 'No' otherwise")
+    churn: Literal["Yes", "No"]
     churn_probability: Optional[float] = Field(None, ge=0.0, le=1.0)
     model_version: str
 
@@ -174,7 +121,7 @@ class BatchPredictRequest(BaseModel):
 
 
 class SinglePrediction(BaseModel):
-    churn: str
+    churn: Literal["Yes", "No"]
     churn_probability: Optional[float]
 
 
