@@ -73,3 +73,26 @@ data/splits/test.csv
 ```
 
 If they are missing, the batch page will show exactly which file is missing instead of pretending predictions were run.
+
+
+## DVC-aware dashboard update
+
+This dashboard now reads the working DVC setup directly:
+
+- `configs/params.yaml`
+- `dvc.yaml`
+- `dvc.lock`
+
+It also recognizes the current project outputs:
+
+- `data/processed/cleaned_reference.csv`
+- `data/processed/featurized_reference.csv`
+- `data/splits/production.csv`
+- `data/splits/train.csv`
+- `data/splits/test.csv`
+- `models/feature_engineer.joblib`
+- `models/preprocessing_pipeline.joblib`
+- `models/best_model.pkl`
+- `reports/...`
+
+The `/predict` page accepts raw Telco customer input and uses the same preprocessing artifacts and saved model used by the project pipeline.

@@ -1,0 +1,432 @@
+[
+  {
+    "ok": true,
+    "timestamp": 1778277036.9032981,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.047410596210855305,
+    "confidence": 0.9525894037891447,
+    "probabilities": [
+      0.9525894037891447,
+      0.047410596210855305
+    ],
+    "latency_ms": 4.77,
+    "input": {
+      "tenure": 24.0,
+      "MonthlyCharges": 65.5,
+      "TotalCharges": 1572.0,
+      "gender": "Male",
+      "SeniorCitizen": 0,
+      "Partner": "Yes",
+      "Dependents": "No",
+      "PhoneService": "Yes",
+      "MultipleLines": "No",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "One year",
+      "PaperlessBilling": "Yes",
+      "PaymentMethod": "Credit card (automatic)"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  },
+  {
+    "ok": true,
+    "timestamp": 1778277043.209431,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.047410596210855305,
+    "confidence": 0.9525894037891447,
+    "probabilities": [
+      0.9525894037891447,
+      0.047410596210855305
+    ],
+    "latency_ms": 4.74,
+    "input": {
+      "tenure": 24.0,
+      "MonthlyCharges": 65.5,
+      "TotalCharges": 1572.0,
+      "gender": "Male",
+      "SeniorCitizen": 0,
+      "Partner": "Yes",
+      "Dependents": "No",
+      "PhoneService": "Yes",
+      "MultipleLines": "No",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "One year",
+      "PaperlessBilling": "Yes",
+      "PaymentMethod": "Credit card (automatic)"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  },
+  {
+    "ok": true,
+    "timestamp": 1778277047.0926652,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.019431491788275794,
+    "confidence": 0.9805685082117243,
+    "probabilities": [
+      0.9805685082117243,
+      0.019431491788275794
+    ],
+    "latency_ms": 4.53,
+    "input": {
+      "tenure": 24.0,
+      "MonthlyCharges": 65.5,
+      "TotalCharges": 1572.0,
+      "gender": "Male",
+      "SeniorCitizen": 0,
+      "Partner": "Yes",
+      "Dependents": "No",
+      "PhoneService": "Yes",
+      "MultipleLines": "No",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "Two year",
+      "PaperlessBilling": "Yes",
+      "PaymentMethod": "Credit card (automatic)"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  },
+  {
+    "ok": true,
+    "timestamp": 1778277413.3222022,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.047410596210855305,
+    "confidence": 0.9525894037891447,
+    "probabilities": [
+      0.9525894037891447,
+      0.047410596210855305
+    ],
+    "latency_ms": 4.48,
+    "input": {
+      "tenure": 24.0,
+      "MonthlyCharges": 65.5,
+      "TotalCharges": 1572.0,
+      "gender": "Male",
+      "SeniorCitizen": 0,
+      "Partner": "Yes",
+      "Dependents": "No",
+      "PhoneService": "Yes",
+      "MultipleLines": "No",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "One year",
+      "PaperlessBilling": "Yes",
+      "PaymentMethod": "Credit card (automatic)"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  },
+  {
+    "ok": true,
+    "timestamp": 1778278786.013601,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.047410596210855305,
+    "confidence": 0.9525894037891447,
+    "probabilities": [
+      0.9525894037891447,
+      0.047410596210855305
+    ],
+    "latency_ms": 4.67,
+    "input": {
+      "tenure": 24.0,
+      "MonthlyCharges": 65.5,
+      "TotalCharges": 1572.0,
+      "gender": "Male",
+      "SeniorCitizen": 0,
+      "Partner": "Yes",
+      "Dependents": "No",
+      "PhoneService": "Yes",
+      "MultipleLines": "No",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "One year",
+      "PaperlessBilling": "Yes",
+      "PaymentMethod": "Credit card (automatic)"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  },
+  {
+    "ok": true,
+    "timestamp": 1778278815.1329122,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.006130672905330508,
+    "confidence": 0.9938693270946695,
+    "probabilities": [
+      0.9938693270946695,
+      0.006130672905330508
+    ],
+    "latency_ms": 4.58,
+    "input": {
+      "tenure": 34.0,
+      "MonthlyCharges": 54.5,
+      "TotalCharges": 1543.0,
+      "gender": "Female",
+      "SeniorCitizen": 1,
+      "Partner": "Yes",
+      "Dependents": "No",
+      "PhoneService": "Yes",
+      "MultipleLines": "No phone service",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "Two year",
+      "PaperlessBilling": "No",
+      "PaymentMethod": "Credit card (automatic)"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  },
+  {
+    "ok": true,
+    "timestamp": 1778278829.5303092,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.045822051937914936,
+    "confidence": 0.9541779480620851,
+    "probabilities": [
+      0.9541779480620851,
+      0.045822051937914936
+    ],
+    "latency_ms": 4.22,
+    "input": {
+      "tenure": 24.0,
+      "MonthlyCharges": 65.5,
+      "TotalCharges": 1572.0,
+      "gender": "Male",
+      "SeniorCitizen": 0,
+      "Partner": "No",
+      "Dependents": "No",
+      "PhoneService": "No",
+      "MultipleLines": "No",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "One year",
+      "PaperlessBilling": "Yes",
+      "PaymentMethod": "Credit card (automatic)"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  },
+  {
+    "ok": true,
+    "timestamp": 1778397570.360802,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.047410596210855305,
+    "confidence": 0.9525894037891447,
+    "probabilities": [
+      0.9525894037891447,
+      0.047410596210855305
+    ],
+    "latency_ms": 4.56,
+    "input": {
+      "tenure": 24.0,
+      "MonthlyCharges": 65.5,
+      "TotalCharges": 1572.0,
+      "gender": "Male",
+      "SeniorCitizen": 0,
+      "Partner": "Yes",
+      "Dependents": "No",
+      "PhoneService": "Yes",
+      "MultipleLines": "No",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "One year",
+      "PaperlessBilling": "Yes",
+      "PaymentMethod": "Credit card (automatic)"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  },
+  {
+    "ok": true,
+    "timestamp": 1778398212.5514545,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.049586884677410126,
+    "confidence": 0.9504131078720093,
+    "probabilities": [
+      0.9504131078720093,
+      0.049586884677410126
+    ],
+    "latency_ms": 15.92,
+    "input": {
+      "tenure": 24.0,
+      "MonthlyCharges": 65.5,
+      "TotalCharges": 1572.0,
+      "gender": "Male",
+      "SeniorCitizen": 0,
+      "Partner": "Yes",
+      "Dependents": "No",
+      "PhoneService": "Yes",
+      "MultipleLines": "No",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "One year",
+      "PaperlessBilling": "Yes",
+      "PaymentMethod": "Credit card (automatic)"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  },
+  {
+    "ok": true,
+    "timestamp": 1778398222.603679,
+    "prediction": 0,
+    "churn": "No",
+    "churn_probability": 0.037463463842868805,
+    "confidence": 0.9625365138053894,
+    "probabilities": [
+      0.9625365138053894,
+      0.037463463842868805
+    ],
+    "latency_ms": 13.66,
+    "input": {
+      "tenure": 24.0,
+      "MonthlyCharges": 65.5,
+      "TotalCharges": 1572.0,
+      "gender": "Male",
+      "SeniorCitizen": 0,
+      "Partner": "Yes",
+      "Dependents": "No",
+      "PhoneService": "Yes",
+      "MultipleLines": "No",
+      "InternetService": "DSL",
+      "OnlineSecurity": "Yes",
+      "OnlineBackup": "Yes",
+      "DeviceProtection": "No",
+      "TechSupport": "Yes",
+      "StreamingTV": "No",
+      "StreamingMovies": "No",
+      "Contract": "One year",
+      "PaperlessBilling": "Yes",
+      "PaymentMethod": "Mailed check"
+    },
+    "feature_shape": [
+      1,
+      28
+    ],
+    "model_path": "models/best_model.pkl",
+    "preprocessing": {
+      "feature_engineer": "models/feature_engineer.joblib",
+      "preprocessing_pipeline": "models/preprocessing_pipeline.joblib"
+    }
+  }
+]
