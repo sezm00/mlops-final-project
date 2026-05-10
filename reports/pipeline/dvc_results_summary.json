@@ -1,0 +1,73 @@
+{
+    "dvc_init_success": true,
+    "dvc_repro_success": true,
+    "dvc_status_success": true,
+    "dvc_metrics_success": true,
+    "dvc_dag_success": true,
+    "stages_attempted": [
+        "train",
+        "hpo",
+        "register"
+    ],
+    "stage_results": {
+        "train": {
+            "label": "repro_train",
+            "command": "/usr/bin/python3 -m dvc repro --single-item train",
+            "returncode": 0,
+            "stdout_path": "reports/pipeline/dvc_repro_train_stdout.txt",
+            "stderr_path": "reports/pipeline/dvc_repro_train_stderr.txt",
+            "success": true
+        },
+        "hpo": {
+            "label": "repro_hpo",
+            "command": "/usr/bin/python3 -m dvc repro --single-item hpo",
+            "returncode": 0,
+            "stdout_path": "reports/pipeline/dvc_repro_hpo_stdout.txt",
+            "stderr_path": "reports/pipeline/dvc_repro_hpo_stderr.txt",
+            "success": true
+        },
+        "register": {
+            "label": "repro_register",
+            "command": "/usr/bin/python3 -m dvc repro --single-item register",
+            "returncode": 0,
+            "stdout_path": "reports/pipeline/dvc_repro_register_stdout.txt",
+            "stderr_path": "reports/pipeline/dvc_repro_register_stderr.txt",
+            "success": true
+        }
+    },
+    "dvc_init_result": {
+        "label": "init",
+        "command": "/usr/bin/python3 -m dvc init --no-scm",
+        "returncode": 0,
+        "stdout_path": "reports/pipeline/dvc_init_stdout.txt",
+        "stderr_path": "reports/pipeline/dvc_init_stderr.txt",
+        "success": true
+    },
+    "dvc_status_result": {
+        "label": "status",
+        "command": "/usr/bin/python3 -m dvc status",
+        "returncode": 0,
+        "stdout_path": "reports/pipeline/dvc_status_stdout.txt",
+        "stderr_path": "reports/pipeline/dvc_status_stderr.txt",
+        "success": true
+    },
+    "dvc_dag_result": {
+        "label": "dag",
+        "command": "/usr/bin/python3 -m dvc dag",
+        "returncode": 0,
+        "stdout_path": "reports/pipeline/dvc_dag_stdout.txt",
+        "stderr_path": "reports/pipeline/dvc_dag_stderr.txt",
+        "success": true
+    },
+    "dvc_metrics_result": {
+        "label": "metrics_show",
+        "command": "/usr/bin/python3 -m dvc metrics show",
+        "returncode": 0,
+        "stdout_path": "reports/pipeline/dvc_metrics_show_stdout.txt",
+        "stderr_path": "reports/pipeline/dvc_metrics_show_stderr.txt",
+        "success": true
+    },
+    "dvc_lock_created": true,
+    "dvc_yaml_exists": true,
+    "model_registry_summary_created": true
+}

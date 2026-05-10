@@ -1,0 +1,7 @@
+Registered model 'BestMLOpsModel' already exists. Creating a new version of this model...
+2026/05/09 05:07:10 WARNING mlflow.tracking._model_registry.fluent: Run with id f2a2c2e7fab1409f8c7a9cf64e47807f has no artifacts at artifact path 'model', registering model based on models:/m-d94b2fc089d44995b995b1faaa0d3562 instead
+Created version '2' of model 'BestMLOpsModel'.
+/content/ibrahim_mlops_project/src/training/register_model.py:224: FutureWarning: ``mlflow.tracking.client.MlflowClient.transition_model_version_stage`` is deprecated since 2.9.0. Model registry stages will be removed in a future major release. To learn more about the deprecation of model registry stages, see our migration guide here: https://mlflow.org/docs/latest/model-registry.html#migrating-from-stages
+  client.transition_model_version_stage(
+/content/ibrahim_mlops_project/src/training/register_model.py:231: FutureWarning: ``mlflow.tracking.client.MlflowClient.transition_model_version_stage`` is deprecated since 2.9.0. Model registry stages will be removed in a future major release. To learn more about the deprecation of model registry stages, see our migration guide here: https://mlflow.org/docs/latest/model-registry.html#migrating-from-stages
+  client.transition_model_version_stage(

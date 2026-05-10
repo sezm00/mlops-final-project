@@ -1,0 +1,33 @@
+{
+    "registered_model_name": "BestMLOpsModel",
+    "registered_model_version": "2",
+    "registered_run_id": "f2a2c2e7fab1409f8c7a9cf64e47807f",
+    "metric_name": "f1_macro",
+    "metric_value": 0.9499949994999499,
+    "model_name_from_run": "xgboost_all_features",
+    "model_stage_from_run": "final_model",
+    "final_model_choice": "all_features",
+    "final_reason": "Selected-feature model did not outperform the all-feature model, so feature importance is kept as analysis only.",
+    "feature_importance_kept_as_analysis": true,
+    "selected_features_analysis": [
+        "feature_1",
+        "feature_5",
+        "feature_3",
+        "feature_4",
+        "feature_6",
+        "feature_7",
+        "feature_0",
+        "feature_2"
+    ],
+    "top_10_reference_features": [
+        "feature_1",
+        "feature_5",
+        "feature_3",
+        "feature_4",
+        "feature_6",
+        "feature_7",
+        "feature_0",
+        "feature_2"
+    ],
+    "promotion_message": "Model moved to Production."
+}

@@ -1,0 +1,34 @@
+WA_Fn-UseC_-Telco-Customer-Churn.csv.dvc:
+	changed outs:
+		not in cache:       WA_Fn-UseC_-Telco-Customer-Churn.csv
+prepare:
+	changed deps:
+		modified:           src/data/prepare.py
+		modified:           configs/params.yaml
+		deleted:            data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+	changed outs:
+		deleted:            data/processed/cleaned_reference.csv
+		deleted:            data/splits/production.csv
+featurize:
+	changed deps:
+		deleted:            src/features/featurize.py
+		deleted:            src/features/feature_engineer.py
+		modified:           configs/params.yaml
+		deleted:            data/processed/cleaned_reference.csv
+	changed outs:
+		deleted:            data/processed/featurized_reference.csv
+		deleted:            models/feature_engineer.joblib
+preprocess:
+	changed deps:
+		modified:           src/data/preprocess.py
+		new:                configs/params.yaml
+		deleted:            data/processed/featurized_reference.csv
+	changed outs:
+		modified:           data/splits/train.csv
+		modified:           data/splits/test.csv
+		deleted:            models/preprocessing_pipeline.joblib
+train:
+	changed outs:
+		modified:           reports/metrics.json
+register:
+	always changed

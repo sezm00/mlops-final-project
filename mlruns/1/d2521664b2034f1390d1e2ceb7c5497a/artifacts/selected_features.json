@@ -1,0 +1,28 @@
+{
+    "method": "permutation_importance_with_validation_cutoff_selection",
+    "reference_best_model_name": "xgboost",
+    "primary_metric": "f1_macro",
+    "selected_candidate_name": "top_8",
+    "selected_feature_count": 8,
+    "selected_features": [
+        "feature_1",
+        "feature_5",
+        "feature_3",
+        "feature_4",
+        "feature_6",
+        "feature_7",
+        "feature_0",
+        "feature_2"
+    ],
+    "top_10_reference_features": [
+        "feature_1",
+        "feature_5",
+        "feature_3",
+        "feature_4",
+        "feature_6",
+        "feature_7",
+        "feature_0",
+        "feature_2"
+    ],
+    "feature_selection_validation_score": 0.9124863259884357
+}

@@ -1,0 +1,23 @@
+artifact_path: /content/ibrahim_mlops_project/mlruns/1/models/m-6ff9a2f21065466bafc115f03a7996a6/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.13
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.6.1
+    skops_trusted_types: null
+mlflow_version: 3.12.0
+model_id: m-6ff9a2f21065466bafc115f03a7996a6
+model_size_bytes: 258535
+model_uuid: m-6ff9a2f21065466bafc115f03a7996a6
+prompts: null
+run_id: 502a39b549a64426a2344b1bab995307
+utc_time_created: '2026-05-09 04:53:45.603058'

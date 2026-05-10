@@ -1,0 +1,222 @@
+{
+    "best_hpo_model_name": "xgboost",
+    "primary_metric": "f1_macro",
+    "best_score": 0.9499949994999499,
+    "best_model_path": "models/best_tuned_model.pkl",
+    "best_summary": {
+        "model_name": "xgboost",
+        "problem_type": "classification",
+        "scoring": "f1_macro",
+        "primary_metric": "f1_macro",
+        "best_cv_score": 0.917427076065831,
+        "test_score": 0.9499949994999499,
+        "best_params": {
+            "model__subsample": 0.9,
+            "model__n_estimators": 300,
+            "model__max_depth": 4,
+            "model__learning_rate": 0.1,
+            "model__colsample_bytree": 1.0
+        },
+        "train_metrics": {
+            "problem_type": "classification",
+            "accuracy": 1.0,
+            "precision_macro": 1.0,
+            "recall_macro": 1.0,
+            "f1_macro": 1.0,
+            "roc_auc": 1.0
+        },
+        "test_metrics": {
+            "problem_type": "classification",
+            "accuracy": 0.95,
+            "precision_macro": 0.9501800720288115,
+            "recall_macro": 0.95,
+            "f1_macro": 0.9499949994999499,
+            "roc_auc": 0.9876
+        },
+        "diagnostics": {
+            "model_name": "hpo_xgboost",
+            "verdict": "GOOD",
+            "warnings": [
+                "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+            ],
+            "primary_metric": "f1_macro",
+            "train_score": 1.0,
+            "test_score": 0.9499949994999499,
+            "gap": 0.05000500050005008
+        },
+        "model_path": "models/tuned_xgboost_model.pkl"
+    },
+    "all_hpo_summaries": [
+        {
+            "model_name": "random_forest",
+            "problem_type": "classification",
+            "scoring": "f1_macro",
+            "primary_metric": "f1_macro",
+            "best_cv_score": 0.9148866680006539,
+            "test_score": 0.9299929992999301,
+            "best_params": {
+                "model__n_estimators": 200,
+                "model__min_samples_split": 2,
+                "model__min_samples_leaf": 2,
+                "model__max_features": "sqrt",
+                "model__max_depth": 10
+            },
+            "train_metrics": {
+                "problem_type": "classification",
+                "accuracy": 0.9925,
+                "precision_macro": 0.992535820559626,
+                "recall_macro": 0.9924742474247426,
+                "f1_macro": 0.9924988279418658,
+                "roc_auc": 0.9997249724972497
+            },
+            "test_metrics": {
+                "problem_type": "classification",
+                "accuracy": 0.93,
+                "precision_macro": 0.930172068827531,
+                "recall_macro": 0.9299999999999999,
+                "f1_macro": 0.9299929992999301,
+                "roc_auc": 0.9796
+            },
+            "diagnostics": {
+                "model_name": "hpo_random_forest",
+                "verdict": "GOOD",
+                "warnings": [
+                    "Model looks acceptable: test f1_macro=0.9300, gap=0.0625."
+                ],
+                "primary_metric": "f1_macro",
+                "train_score": 0.9924988279418658,
+                "test_score": 0.9299929992999301,
+                "gap": 0.06250582864193577
+            },
+            "model_path": "models/tuned_random_forest_model.pkl"
+        },
+        {
+            "model_name": "xgboost",
+            "problem_type": "classification",
+            "scoring": "f1_macro",
+            "primary_metric": "f1_macro",
+            "best_cv_score": 0.917427076065831,
+            "test_score": 0.9499949994999499,
+            "best_params": {
+                "model__subsample": 0.9,
+                "model__n_estimators": 300,
+                "model__max_depth": 4,
+                "model__learning_rate": 0.1,
+                "model__colsample_bytree": 1.0
+            },
+            "train_metrics": {
+                "problem_type": "classification",
+                "accuracy": 1.0,
+                "precision_macro": 1.0,
+                "recall_macro": 1.0,
+                "f1_macro": 1.0,
+                "roc_auc": 1.0
+            },
+            "test_metrics": {
+                "problem_type": "classification",
+                "accuracy": 0.95,
+                "precision_macro": 0.9501800720288115,
+                "recall_macro": 0.95,
+                "f1_macro": 0.9499949994999499,
+                "roc_auc": 0.9876
+            },
+            "diagnostics": {
+                "model_name": "hpo_xgboost",
+                "verdict": "GOOD",
+                "warnings": [
+                    "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+                ],
+                "primary_metric": "f1_macro",
+                "train_score": 1.0,
+                "test_score": 0.9499949994999499,
+                "gap": 0.05000500050005008
+            },
+            "model_path": "models/tuned_xgboost_model.pkl"
+        },
+        {
+            "model_name": "lightgbm",
+            "problem_type": "classification",
+            "scoring": "f1_macro",
+            "primary_metric": "f1_macro",
+            "best_cv_score": 0.925005880960487,
+            "test_score": 0.9199679871948779,
+            "best_params": {
+                "model__subsample": 0.8,
+                "model__num_leaves": 15,
+                "model__n_estimators": 300,
+                "model__max_depth": 5,
+                "model__learning_rate": 0.05
+            },
+            "train_metrics": {
+                "problem_type": "classification",
+                "accuracy": 1.0,
+                "precision_macro": 1.0,
+                "recall_macro": 1.0,
+                "f1_macro": 1.0,
+                "roc_auc": 1.0
+            },
+            "test_metrics": {
+                "problem_type": "classification",
+                "accuracy": 0.92,
+                "precision_macro": 0.9206730769230769,
+                "recall_macro": 0.9199999999999999,
+                "f1_macro": 0.9199679871948779,
+                "roc_auc": 0.978
+            },
+            "diagnostics": {
+                "model_name": "hpo_lightgbm",
+                "verdict": "GOOD",
+                "warnings": [
+                    "Model looks acceptable: test f1_macro=0.9200, gap=0.0800."
+                ],
+                "primary_metric": "f1_macro",
+                "train_score": 1.0,
+                "test_score": 0.9199679871948779,
+                "gap": 0.08003201280512207
+            },
+            "model_path": "models/tuned_lightgbm_model.pkl"
+        },
+        {
+            "model_name": "catboost",
+            "problem_type": "classification",
+            "scoring": "f1_macro",
+            "primary_metric": "f1_macro",
+            "best_cv_score": 0.9199495105091939,
+            "test_score": 0.94,
+            "best_params": {
+                "model__learning_rate": 0.05,
+                "model__l2_leaf_reg": 1,
+                "model__iterations": 300,
+                "model__depth": 5
+            },
+            "train_metrics": {
+                "problem_type": "classification",
+                "accuracy": 1.0,
+                "precision_macro": 1.0,
+                "recall_macro": 1.0,
+                "f1_macro": 1.0,
+                "roc_auc": 1.0
+            },
+            "test_metrics": {
+                "problem_type": "classification",
+                "accuracy": 0.94,
+                "precision_macro": 0.94,
+                "recall_macro": 0.94,
+                "f1_macro": 0.94,
+                "roc_auc": 0.9863999999999999
+            },
+            "diagnostics": {
+                "model_name": "hpo_catboost",
+                "verdict": "GOOD",
+                "warnings": [
+                    "Model looks acceptable: test f1_macro=0.9400, gap=0.0600."
+                ],
+                "primary_metric": "f1_macro",
+                "train_score": 1.0,
+                "test_score": 0.94,
+                "gap": 0.06000000000000005
+            },
+            "model_path": "models/tuned_catboost_model.pkl"
+        }
+    ]
+}

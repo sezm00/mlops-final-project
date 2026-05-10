@@ -1,0 +1,90 @@
+[
+    {
+        "model_name": "logistic_regression_all_features",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.8488, gap=0.0133."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 0.8621199681622471,
+        "test_score": 0.8487750781328763,
+        "gap": 0.013344890029370782
+    },
+    {
+        "model_name": "random_forest_all_features",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9400, gap=0.0600."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.94,
+        "gap": 0.06000000000000005
+    },
+    {
+        "model_name": "gradient_boosting_all_features",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9300, gap=0.0700."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.9299929992999301,
+        "gap": 0.07000700070006993
+    },
+    {
+        "model_name": "svc_all_features",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9200, gap=0.0250."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 0.9449779911964786,
+        "test_score": 0.92,
+        "gap": 0.02497799119647859
+    },
+    {
+        "model_name": "xgboost_all_features",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.9499949994999499,
+        "gap": 0.05000500050005008
+    },
+    {
+        "model_name": "lightgbm_all_features",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9400, gap=0.0600."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.9399759903961584,
+        "gap": 0.06002400960384158
+    },
+    {
+        "model_name": "catboost_all_features",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.9499949994999499,
+        "gap": 0.05000500050005008
+    },
+    {
+        "model_name": "xgboost_selected_features",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.9499949994999499,
+        "gap": 0.05000500050005008
+    }
+]

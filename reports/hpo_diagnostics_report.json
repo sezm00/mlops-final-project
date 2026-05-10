@@ -1,0 +1,46 @@
+[
+    {
+        "model_name": "hpo_random_forest",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9300, gap=0.0625."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 0.9924988279418658,
+        "test_score": 0.9299929992999301,
+        "gap": 0.06250582864193577
+    },
+    {
+        "model_name": "hpo_xgboost",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9500, gap=0.0500."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.9499949994999499,
+        "gap": 0.05000500050005008
+    },
+    {
+        "model_name": "hpo_lightgbm",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9200, gap=0.0800."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.9199679871948779,
+        "gap": 0.08003201280512207
+    },
+    {
+        "model_name": "hpo_catboost",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9400, gap=0.0600."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.94,
+        "gap": 0.06000000000000005
+    }
+]

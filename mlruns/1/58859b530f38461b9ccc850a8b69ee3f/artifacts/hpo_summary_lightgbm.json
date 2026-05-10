@@ -1,0 +1,43 @@
+{
+    "model_name": "lightgbm",
+    "problem_type": "classification",
+    "scoring": "f1_macro",
+    "primary_metric": "f1_macro",
+    "best_cv_score": 0.925005880960487,
+    "test_score": 0.9199679871948779,
+    "best_params": {
+        "model__subsample": 0.8,
+        "model__num_leaves": 15,
+        "model__n_estimators": 300,
+        "model__max_depth": 5,
+        "model__learning_rate": 0.05
+    },
+    "train_metrics": {
+        "problem_type": "classification",
+        "accuracy": 1.0,
+        "precision_macro": 1.0,
+        "recall_macro": 1.0,
+        "f1_macro": 1.0,
+        "roc_auc": 1.0
+    },
+    "test_metrics": {
+        "problem_type": "classification",
+        "accuracy": 0.92,
+        "precision_macro": 0.9206730769230769,
+        "recall_macro": 0.9199999999999999,
+        "f1_macro": 0.9199679871948779,
+        "roc_auc": 0.978
+    },
+    "diagnostics": {
+        "model_name": "hpo_lightgbm",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9200, gap=0.0800."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 1.0,
+        "test_score": 0.9199679871948779,
+        "gap": 0.08003201280512207
+    },
+    "model_path": "models/tuned_lightgbm_model.pkl"
+}

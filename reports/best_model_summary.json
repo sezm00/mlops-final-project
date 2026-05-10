@@ -1,0 +1,70 @@
+{
+    "final_model_choice": "all_features",
+    "final_model_name": "xgboost_all_features",
+    "final_reason": "Selected-feature model did not outperform the all-feature model, so feature importance is kept as analysis only.",
+    "primary_metric": "f1_macro",
+    "all_features_best_model_name": "xgboost",
+    "all_features_score": 0.9499949994999499,
+    "all_features_metrics": {
+        "problem_type": "classification",
+        "accuracy": 0.95,
+        "precision_macro": 0.9501800720288115,
+        "recall_macro": 0.95,
+        "f1_macro": 0.9499949994999499,
+        "roc_auc": 0.9892000000000001
+    },
+    "selected_features_score": 0.9499949994999499,
+    "selected_features_metrics": {
+        "problem_type": "classification",
+        "accuracy": 0.95,
+        "precision_macro": 0.9501800720288115,
+        "recall_macro": 0.95,
+        "f1_macro": 0.9499949994999499,
+        "roc_auc": 0.9888
+    },
+    "feature_importance_kept_as_analysis": true,
+    "selected_features_analysis": [
+        "feature_1",
+        "feature_5",
+        "feature_3",
+        "feature_4",
+        "feature_6",
+        "feature_7",
+        "feature_0",
+        "feature_2"
+    ],
+    "top_10_reference_features": [
+        "feature_1",
+        "feature_5",
+        "feature_3",
+        "feature_4",
+        "feature_6",
+        "feature_7",
+        "feature_0",
+        "feature_2"
+    ],
+    "final_features": [
+        "feature_0",
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "feature_4",
+        "feature_5",
+        "feature_6",
+        "feature_7"
+    ],
+    "final_score": 0.9499949994999499,
+    "final_metrics": {
+        "problem_type": "classification",
+        "accuracy": 0.95,
+        "precision_macro": 0.9501800720288115,
+        "recall_macro": 0.95,
+        "f1_macro": 0.9499949994999499,
+        "roc_auc": 0.9892000000000001
+    },
+    "model_path": "models/best_model.pkl",
+    "best_all_features_model_path": "models/best_all_features_model.pkl",
+    "selected_feature_model_path": "models/best_selected_feature_model.pkl",
+    "final_run_id": "f2a2c2e7fab1409f8c7a9cf64e47807f",
+    "leakage_status": "PASS"
+}

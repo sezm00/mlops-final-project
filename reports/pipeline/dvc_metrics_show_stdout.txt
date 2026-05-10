@@ -1,0 +1,2 @@
+Path                  accuracy    f1_macro    precision_macro    problem_type    recall_macro    roc_auc
+reports/metrics.json  0.94        0.94        0.94               classification  0.94            0.9864
