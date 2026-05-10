@@ -1,0 +1,8 @@
+{
+    "problem_type": "classification",
+    "accuracy": 0.85,
+    "precision_macro": 0.8617197188921042,
+    "recall_macro": 0.85,
+    "f1_macro": 0.8487750781328763,
+    "roc_auc": 0.9196
+}

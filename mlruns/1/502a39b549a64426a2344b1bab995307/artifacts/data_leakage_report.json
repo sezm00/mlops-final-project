@@ -1,0 +1,10 @@
+{
+    "status": "PASS",
+    "warnings": [],
+    "details": {
+        "train_test_feature_overlap_count": 0,
+        "features_identical_to_target": [],
+        "high_target_correlations": {},
+        "suspicious_categorical_features": {}
+    }
+}

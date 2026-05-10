@@ -1,0 +1,43 @@
+{
+    "model_name": "random_forest",
+    "problem_type": "classification",
+    "scoring": "f1_macro",
+    "primary_metric": "f1_macro",
+    "best_cv_score": 0.9148866680006539,
+    "test_score": 0.9299929992999301,
+    "best_params": {
+        "model__n_estimators": 200,
+        "model__min_samples_split": 2,
+        "model__min_samples_leaf": 2,
+        "model__max_features": "sqrt",
+        "model__max_depth": 10
+    },
+    "train_metrics": {
+        "problem_type": "classification",
+        "accuracy": 0.9925,
+        "precision_macro": 0.992535820559626,
+        "recall_macro": 0.9924742474247426,
+        "f1_macro": 0.9924988279418658,
+        "roc_auc": 0.9997249724972497
+    },
+    "test_metrics": {
+        "problem_type": "classification",
+        "accuracy": 0.93,
+        "precision_macro": 0.930172068827531,
+        "recall_macro": 0.9299999999999999,
+        "f1_macro": 0.9299929992999301,
+        "roc_auc": 0.9796
+    },
+    "diagnostics": {
+        "model_name": "hpo_random_forest",
+        "verdict": "GOOD",
+        "warnings": [
+            "Model looks acceptable: test f1_macro=0.9300, gap=0.0625."
+        ],
+        "primary_metric": "f1_macro",
+        "train_score": 0.9924988279418658,
+        "test_score": 0.9299929992999301,
+        "gap": 0.06250582864193577
+    },
+    "model_path": "models/tuned_random_forest_model.pkl"
+}

@@ -1,0 +1,117 @@
+[
+    {
+        "candidate_name": "top_5",
+        "feature_count": 5,
+        "selected_features": [
+            "feature_1",
+            "feature_5",
+            "feature_3",
+            "feature_4",
+            "feature_6"
+        ],
+        "validation_score": 0.9,
+        "train_metrics": {
+            "problem_type": "classification",
+            "accuracy": 1.0,
+            "precision_macro": 1.0,
+            "recall_macro": 1.0,
+            "f1_macro": 1.0,
+            "roc_auc": 1.0
+        },
+        "validation_metrics": {
+            "problem_type": "classification",
+            "accuracy": 0.9,
+            "precision_macro": 0.9,
+            "recall_macro": 0.9,
+            "f1_macro": 0.9,
+            "roc_auc": 0.96375
+        }
+    },
+    {
+        "candidate_name": "top_8",
+        "feature_count": 8,
+        "selected_features": [
+            "feature_1",
+            "feature_5",
+            "feature_3",
+            "feature_4",
+            "feature_6",
+            "feature_7",
+            "feature_0",
+            "feature_2"
+        ],
+        "validation_score": 0.9124863259884357,
+        "train_metrics": {
+            "problem_type": "classification",
+            "accuracy": 1.0,
+            "precision_macro": 1.0,
+            "recall_macro": 1.0,
+            "f1_macro": 1.0,
+            "roc_auc": 1.0
+        },
+        "validation_metrics": {
+            "problem_type": "classification",
+            "accuracy": 0.9125,
+            "precision_macro": 0.9127579737335836,
+            "recall_macro": 0.9125000000000001,
+            "f1_macro": 0.9124863259884357,
+            "roc_auc": 0.956875
+        }
+    },
+    {
+        "candidate_name": "cumulative_90",
+        "feature_count": 4,
+        "selected_features": [
+            "feature_1",
+            "feature_5",
+            "feature_3",
+            "feature_4"
+        ],
+        "validation_score": 0.8749218261413383,
+        "train_metrics": {
+            "problem_type": "classification",
+            "accuracy": 0.9875,
+            "precision_macro": 0.9874980465697765,
+            "recall_macro": 0.9874980465697765,
+            "f1_macro": 0.9874980465697765,
+            "roc_auc": 0.9997265197687139
+        },
+        "validation_metrics": {
+            "problem_type": "classification",
+            "accuracy": 0.875,
+            "precision_macro": 0.8759398496240601,
+            "recall_macro": 0.875,
+            "f1_macro": 0.8749218261413383,
+            "roc_auc": 0.941875
+        }
+    },
+    {
+        "candidate_name": "cumulative_95",
+        "feature_count": 6,
+        "selected_features": [
+            "feature_1",
+            "feature_5",
+            "feature_3",
+            "feature_4",
+            "feature_6",
+            "feature_7"
+        ],
+        "validation_score": 0.9,
+        "train_metrics": {
+            "problem_type": "classification",
+            "accuracy": 1.0,
+            "precision_macro": 1.0,
+            "recall_macro": 1.0,
+            "f1_macro": 1.0,
+            "roc_auc": 1.0
+        },
+        "validation_metrics": {
+            "problem_type": "classification",
+            "accuracy": 0.9,
+            "precision_macro": 0.9,
+            "recall_macro": 0.9,
+            "f1_macro": 0.9,
+            "roc_auc": 0.9606250000000001
+        }
+    }
+]

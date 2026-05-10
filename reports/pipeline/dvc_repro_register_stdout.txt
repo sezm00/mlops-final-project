@@ -1,0 +1,18 @@
+Running stage 'register':
+> python src/training/register_model.py --experiment-name mlops_training_experiments --registered-model-name BestMLOpsModel --metric-name f1_macro --higher-is-better --selected-features-path reports/feature_importance/selected_features.json --best-model-summary-path reports/best_model_summary.json --registry-summary-path reports/model_registry_summary.json
+Best model registered successfully.
+Best run ID: f2a2c2e7fab1409f8c7a9cf64e47807f
+Metric used: f1_macro
+Metric value: 0.9499949994999499
+Registered model name: BestMLOpsModel
+Registered model version: 2
+Model name from run: xgboost_all_features
+Model stage from run: final_model
+Final model choice: all_features
+Feature importance kept as analysis: True
+Selected features analysis: ['feature_1', 'feature_5', 'feature_3', 'feature_4', 'feature_6', 'feature_7', 'feature_0', 'feature_2']
+Top 10 reference features: ['feature_1', 'feature_5', 'feature_3', 'feature_4', 'feature_6', 'feature_7', 'feature_0', 'feature_2']
+Registry summary saved to: reports/model_registry_summary.json
+Model moved to Production.
+Updating lock file 'dvc.lock'
+Use `dvc push` to send your updates to remote storage.
